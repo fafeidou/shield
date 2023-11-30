@@ -1,13 +1,13 @@
-package com.example.shield;
+package com.example.proguard;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class ShieldApplication {
+public class ProguardApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ShieldApplication.class, args);
+        SpringApplication.run(ProguardApplication.class, args);
     }
 
 }
