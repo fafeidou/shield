@@ -23,6 +23,7 @@
 
     <modules>
         <module>proguard</module>
+        <module>spring-study</module>
     </modules>
 
     <dependencies>
