@@ -1,0 +1,8 @@
+com.study.springboot.TestAutoConfiguration$MyImportSelector=\
+com.study.springboot.TestAutoConfiguration.AutoConfiguration1,\
+com.study.springboot.TestAutoConfiguration.AutoConfiguration2
+
+
+com.study.springboot.TestConditionAutoConfiguration$MyImportSelector=\
+com.study.springboot.TestConditionAutoConfiguration.AutoConfiguration1,\
+com.study.springboot.TestConditionAutoConfiguration.AutoConfiguration2  
