@@ -3,9 +3,11 @@ package com.example.springstudy.springboot;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.core.type.AnnotationMetadata;
 
 import java.io.IOException;
+import java.util.List;
 
 public class TestAutoConfiguration {
 
@@ -41,9 +43,9 @@ public class TestAutoConfiguration {
 //                System.out.println(name);
 //            }
 //            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-//            List<String> names = SpringFactoriesLoader.loadFactoryNames(MyImportSelector.class, null);
-//            return names.toArray(new String[0]);
-            return new String[]{AutoConfiguration1.class.getName(), AutoConfiguration2.class.getName()};
+//            return new String[]{AutoConfiguration1.class.getName(), AutoConfiguration2.class.getName()};
+            List<String> names = SpringFactoriesLoader.loadFactoryNames(MyImportSelector.class, null);
+            return names.toArray(new String[0]);
         }
     }
 

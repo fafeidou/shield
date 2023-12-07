@@ -1,9 +1,10 @@
-com.example.springstudy.springboot.TestAutoConfiguration.MyImportSelector=\
+#?????????$
+com.example.springstudy.springboot.TestAutoConfiguration$MyImportSelector=\
 com.example.springstudy.springboot.TestAutoConfiguration.AutoConfiguration1,\
 com.example.springstudy.springboot.TestAutoConfiguration.AutoConfiguration2
 
 
-com.example.springstudy.springboot.TestConditionAutoConfiguration.MyImportSelector=\
+com.example.springstudy.springboot.TestConditionAutoConfiguration$MyImportSelector=\
 com.example.springstudy.springboot.TestConditionAutoConfiguration.AutoConfiguration1,\
 com.example.springstudy.springboot.TestConditionAutoConfiguration.AutoConfiguration2
 
