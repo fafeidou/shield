@@ -13,6 +13,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Map;
 
+/**
+ * 条件装配的底层是本质上是 @Conditional 与 Condition，这两个注解。引入自动配置类时，
+ * 期望满足一定条件才能被 Spring 管理，不满足则不管理，怎么做呢？
+ * 比如条件是【类路径下必须有 dataSource】这个 bean ，怎么做呢？
+ */
 public class TestConditionAutoConfiguration {
 
     @SuppressWarnings("all")

@@ -9,6 +9,12 @@ import org.springframework.core.type.AnnotationMetadata;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * 1. 自动配置类本质上就是一个配置类而已，只是用 META-INF/spring.factories 管理，与应用配置类解耦
+ * 2. @Enable 打头的注解本质是利用了 @Import
+ * 3. @Import 配合 DeferredImportSelector 即可实现导入，selectImports 方法的返回值即为要导入的配置类名
+ * 4. DeferredImportSelector 的导入会在最后执行，为的是让其它配置优先解析
+ */
 public class TestAutoConfiguration {
 
     @SuppressWarnings("all")
