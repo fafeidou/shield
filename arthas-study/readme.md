@@ -152,3 +152,95 @@ logger -n com.study.arthas.controller --level debug
 logger -c 18b4aac2 -n com.study.arthas.controller --level debug
 ```
 
+## tt
+记录下指定方法每次调用的入参和返回信息，并能对这些不同时间下调用的信息进行观测
+
+| tt的参数  | 说明                             |
+| --------- | -------------------------------- |
+| -t        | 记录某个方法在一个时间段中的调用 |
+| -l        | 显示所有已经记录的列表           |
+| -n 次数   | 只记录多少次                     |
+| -s 表达式 | 搜索表达式                       |
+| -i 索引号 | 查看指定索引号的详细调用信息     |
+| -p        | 重新调用指定的索引号时间碎片     |
+
+```dtd
+最基本的使用来说，就是记录下当前方法的每次调用环境现场。
+tt -t com.study.arthas.MathGame *
+```
+
+```dtd
+查询之前调用记录
+tt -l
+```
+
+```dtd
+需要筛选出 primeFactors 方法的调用信息
+tt -s 'method.name=="primeFactors"'
+```
+
+```dtd
+重做一次调用
+
+tt -i 1000 -p
+```
+
+### 调用spring bean中的方法
+
+```dtd
+tt -t org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter invokeHandlerMethod
+
+tt -i 1001 -w 'target.getApplicationContext().getBean("helloService").hello()'
+```
+
+## 开启远程debug
+
+```dtd
+准备测试类
+com.study.arthas.MathGame
+```
+
+> 在VM Options里加入以下参数：
+
+```dtd
+-Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=8000
+```
+
+> 然后'Run'运行该项目。运行后输出如下：
+
+```dtd
+ 8000
+```
+
+### 配置Arthas 远程debug
+
+```dtd
+git checkout -b 3.7.1 arthas-all-3.7.1
+```
+
+```dtd
+添加Remote JVM Debug，并配置端口为8000（和上一步配置的相同）
+
+然后启动debug，输出如下：
+```
+
+```dtd
+方法中打入断点。
+com.taobao.arthas.agent334.AgentBootstrap#main
+```
+
+```dtd
+idea debug 运行
+
+com.taobao.arthas.boot.Bootstrap
+```
+
+> 输入数字，选择目标应用进行attach，
+此时可以看到我们的断点被命中了。
+
+
+https://www.jianshu.com/p/28b93f697550 Arthas 启动过程分析
+
+https://blog.bigcoder.cn/archives/a043441e Arthas源码分析
+
+https://segmentfault.com/a/1190000021278869 认识 JavaAgent --获取目标进程已加载的所有类
