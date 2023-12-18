@@ -25,6 +25,7 @@
         <module>proguard</module>
         <module>spring-study</module>
         <module>arthas-study</module>
+        <module>java-agent</module>
     </modules>
 
     <dependencies>
