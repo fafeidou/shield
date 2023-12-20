@@ -1,13 +1,16 @@
 package com.example.agent;
 
+import org.apache.log4j.Logger;
+
 public class TestMain {
+    public static Logger LOGGER = Logger.getLogger(TestMain.class);
 
     static {
         System.out.println("TestMain static block run...");
     }
 
     public static void main(String[] args) {
-        System.out.println("TestMain main start...");
+        LOGGER.info("TestMain main start...");
         try {
             for (int i = 0; i < 100; i++) {
                 test();
@@ -15,11 +18,11 @@ public class TestMain {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("TestMain main end...");
+        LOGGER.info("TestMain main end...");
     }
 
     public static void test() throws InterruptedException {
         Thread.sleep(3000);
-        System.out.println("TestMain main running...");
+        LOGGER.info("TestMain main running...");
     }
 }
