@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 /**
  * 最佳情况：T(n) = O(n) 最差情况：T(n) = O(nlogn) 平均情况：T(n) = O(nlogn)
+ * https://juejin.cn/post/6993926231708139533#heading-5
  */
 public class MergeSort {
 
