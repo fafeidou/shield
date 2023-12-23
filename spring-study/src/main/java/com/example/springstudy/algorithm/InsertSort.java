@@ -2,10 +2,28 @@ package com.example.springstudy.algorithm;
 
 import java.util.Arrays;
 
+import static com.example.springstudy.algorithm.Utils.swap;
+
 public class InsertSort {
     public static void main(String[] args) {
         int[] a = {7, 5, 19, 8, 4, 1};
-        insert(a);
+//        insert(a);
+        insertSort(a);
+    }
+
+    public static void insertSort(int[] arr) {
+        if (arr == null || arr.length < 2) {
+            return;
+        }
+        // 0 - 0 是有序的
+        //0 -i 上有序
+        for (int i = 1; i <= arr.length - 1; i++) {
+            for (int j = i - 1; j >= 0 && arr[j] > arr[j + 1]; j--) {
+                swap(arr, j, j + 1);
+            }
+        }
+
+        System.out.println(Arrays.toString(arr));
     }
 
     // 修改了代码与希尔排序一致
