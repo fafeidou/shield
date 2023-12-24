@@ -8,7 +8,7 @@ import java.util.Arrays;
 public class QuickSort {
     public static void main(String[] args) {
         int[] a = {2, 4, 6, 1, 3, 7, 9, 8, 5};
-        quickSort(a, 0, a.length - 1);
+        quickSort2(a, 0, a.length - 1);
         System.out.println(Arrays.toString(a));
     }
 
@@ -50,5 +50,33 @@ public class QuickSort {
         int temp = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;
+    }
+
+    public static void quickSort2(int[] arr, int L, int R) {
+        if (L < R) {
+            swap(arr, L + (int) Math.random() * (R - L + 1), R);
+            int[] p = partition2(arr, L, R);
+            quickSort2(arr, L, p[0] - 1);
+            quickSort2(arr, p[0] + 1, R);
+        }
+    }
+
+    //    这是一个处理arr[1..r]的函数
+//    默认以arr[r]做划分,arr[r]->p <p ==p >p
+//    返回等于区域(左边界,右边界),所以返回一个长度为2的数组res,res[0]res[1]
+    private static int[] partition2(int[] arr, int L, int R) {
+        int less = L;
+        int more = R;
+        while (L < more) {
+            if (arr[L] < arr[R]) {
+                swap(arr, less++, L++);
+            } else if (arr[L] > arr[R]) {
+                swap(arr, --more, L);
+            } else {
+                L++;
+            }
+        }
+        swap(arr, more, R);
+        return new int[]{less, more};
     }
 }
