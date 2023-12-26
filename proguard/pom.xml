@@ -12,23 +12,23 @@
     <artifactId>proguard</artifactId>
     <name>proguard</name>
     <description>proguard</description>
-    <properties>
-        <proguard-retrace.version>7.1.1</proguard-retrace.version>
-        <java.version>8</java.version>
-    </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.guardsquare</groupId>
             <artifactId>proguard-base</artifactId>
-            <version>${proguard-retrace.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.guardsquare</groupId>
             <artifactId>proguard-retrace</artifactId>
-            <version>${proguard-retrace.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

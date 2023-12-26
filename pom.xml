@@ -21,6 +21,9 @@
         <revision>0.0.1</revision>
         <javassist.version>3.21.0-GA</javassist.version>
         <log4j.versoin>1.2.17</log4j.versoin>
+        <proguard-retrace.version>7.1.1</proguard-retrace.version>
+        <java.version>8</java.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
     </properties>
 
     <modules>
@@ -41,6 +44,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -55,6 +63,24 @@
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>${log4j.versoin}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.guardsquare</groupId>
+                <artifactId>proguard-base</artifactId>
+                <version>${proguard-retrace.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.guardsquare</groupId>
+                <artifactId>proguard-retrace</artifactId>
+                <version>${proguard-retrace.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
