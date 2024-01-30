@@ -31,6 +31,7 @@
         <module>spring-study</module>
         <module>arthas-study</module>
         <module>java-agent</module>
+        <module>netty-study</module>
     </modules>
 
     <dependencies>
