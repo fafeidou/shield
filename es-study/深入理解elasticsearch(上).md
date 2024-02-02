@@ -4239,9 +4239,270 @@ GET my_flights/_search
   - 父子关联关系(Parent/Child)
   - 应用端关联
 
+## 案例1:博客和其作者信息
+
+- 对象类型
+  - 在每一博客的文档中都保留作者的信息
+  - 如果作者信息发生变化,需要修改相关的博客文档
+
+```dtd
+DELETE blog
+# 设置blog的 Mapping
+PUT /blog
+{
+  "mappings": {
+    "properties": {
+      "content": {
+        "type": "text"
+      },
+      "time": {
+        "type": "date"
+      },
+      "user": {
+        "properties": {
+          "city": {
+            "type": "text"
+          },
+          "userid": {
+            "type": "long"
+          },
+          "username": {
+            "type": "keyword"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+# 插入一条 Blog 信息
+PUT blog/_doc/1
+{
+  "content":"I like Elasticsearch",
+  "time":"2019-01-01T00:00:00",
+  "user":{
+    "userid":1,
+    "username":"Jack",
+    "city":"Shanghai"
+  }
+}
+```
+
+
+- 通过一条查询即可获取到博客和作者信息
+
+
+```dtd
+
+# 查询 Blog 信息
+POST blog/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"match": {"content": "Elasticsearch"}},
+        {"match": {"user.username": "Jack"}}
+      ]
+    }
+  }
+}
+
+```
+
+## 案例2:包含对象数组的文档
+
+```dtd
+
+DELETE my_movies
+
+# 电影的Mapping信息
+PUT my_movies
+{
+      "mappings" : {
+      "properties" : {
+        "actors" : {
+          "properties" : {
+            "first_name" : {
+              "type" : "keyword"
+            },
+            "last_name" : {
+              "type" : "keyword"
+            }
+          }
+        },
+        "title" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        }
+      }
+    }
+}
+
+
+# 写入一条电影信息
+POST my_movies/_doc/1
+{
+  "title":"Speed",
+  "actors":[
+    {
+      "first_name":"Keanu",
+      "last_name":"Reeves"
+    },
+
+    {
+      "first_name":"Dennis",
+      "last_name":"Hopper"
+    }
+
+  ]
+}
 
 
 
+```
+
+## 搜索包含对象数组的文档
+
+
+```
+
+# 查询电影信息
+POST my_movies/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"match": {"actors.first_name": "Keanu"}},
+        {"match": {"actors.last_name": "Hopper"}}
+      ]
+    }
+  }
+
+}
+
+```
+
+![img.png](img/搜索包含对象数组的文档.png)
+
+
+## 为什么会搜到不需要的结果?
+- 存储时,内部对象的边界并没有考虑在内,JSON格式被处理成扁平式键值对的结构
+- 当对多个字段进行查询时,导致了意外的搜索结果
+- 可以用 Nested Data Type 解决这个问题
+
+## 什么是 Nested Data Type
+
+
+- Nested数据类型:允许对象数组中的对象被独立索引
+- 使用nested和properties关键字,将所有actors索引到多个分隔的文档
+- 在内部,Nested文档会被保存在两个Lucene文档中,在查询时做Join处理
+
+```
+DELETE my_movies
+# 创建 Nested 对象 Mapping
+PUT my_movies
+{
+      "mappings" : {
+      "properties" : {
+        "actors" : {
+          "type": "nested",
+          "properties" : {
+            "first_name" : {"type" : "keyword"},
+            "last_name" : {"type" : "keyword"}
+          }},
+        "title" : {
+          "type" : "text",
+          "fields" : {"keyword":{"type":"keyword","ignore_above":256}}
+        }
+      }
+    }
+}
+
+POST my_movies/_doc/1
+{
+  "title":"Speed",
+  "actors":[
+    {
+      "first_name":"Keanu",
+      "last_name":"Reeves"
+    },
+
+    {
+      "first_name":"Dennis",
+      "last_name":"Hopper"
+    }
+
+  ]
+}
+
+# Nested 查询
+POST my_movies/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"match": {"title": "Speed"}},
+        {
+          "nested": {
+            "path": "actors",
+            "query": {
+              "bool": {
+                "must": [
+                  {"match": {
+                    "actors.first_name": "Keanu"
+                  }},
+                  {"match": {
+                    "actors.last_name": "Hopper"
+                  }}
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+```
+
+### 嵌套聚合
+
+```
+
+POST my_movies/_search
+{
+  "size": 20, 
+  "aggs": {
+    "actors": {
+      "nested": {
+        "path": "actors"
+      },
+      "aggs": {
+        "actor_name": {
+          "terms": {
+            "field": "actors.first_name",
+            "size": 10
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+
+- 在Elasticsearch中,往往会Denormalize数据的方式建模(使用对象的方式)
+  - 好处是:读写的速度变快/无需表连接/无需行锁
+- 如果文档的更新并不频繁,可以在文档中使用对象
+- 当对象包含了多值对象时
+  - 可以使用嵌套对象(Nested Object)解决查询正确性的问题
 
 
 
