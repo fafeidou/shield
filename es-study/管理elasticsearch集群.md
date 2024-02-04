@@ -19,7 +19,7 @@ curl -u elastic 'localhost:9203/_cat/nodes?pretty'
 
 
 ```dtd
-```
+
 docker run -d --name elasticsearch0 -p 9203:9200 -p 9303:9300 -e "discovery.seed_hosts=192.168.56.112" -e "cluster.initial_master_nodes=cluster0node" -e "cluster.name=cluster_a" -e  "node.name=cluster0node" docker.elastic.co/elasticsearch/elasticsearch:7.1.0
 
 # 生成证书
@@ -66,10 +66,9 @@ bin/elasticsearch -E node.name=node2 -E cluster.name=geektime -E path.data=node2
 #xpack.security.transport.ssl.truststore.path: certs/elastic-certificates.p12
 
 ```
-
-```
-
 # 集群写性能优化
+
+
 
 ## 提高写入性能的方法
 
