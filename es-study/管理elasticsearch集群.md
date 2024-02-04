@@ -889,9 +889,161 @@ GET /apache_logs
 # 索引全生命周期管理及工具介绍
 
 
+## 时间序列的索引
+
+- 特点
+  - 索引中的数据随着时间,持续不断增长
+- 按照时间序列划分索引的好处&挑战
+  - 按照时间进行划分索引,会使得管理更加简单。例如,完整删除一个索引,性能比delete by query好
+  - 如何进行自动化管理,减少人工操作
+    - 从Hot移动到Warm 
+    - 定期关闭或者删除索引
+
+## 索引生命周期常见的阶段
+
+- Hot:索引还存在着大量的读写操作
+- Warm:索引不存在写操作,还有被查询的需要
+- Cold:数据不存在写操作,读操作也不多
+- Delete:索引不再需要,可以被安全删除
+
+## Index Lifecycle Management
+
+- Elasticsearch 6.6推出的新功能
+  - 基于X-Pack Basic License,可免费使用
+- ILM概念
+  - Policy
+  - Phase
+  - Action
+
+## ILM Policy
+
+![img.png](img/ILMPolicy.png)
+
+- 集群中支持定义多个Policy
+- 每个索引可以使用相同或不相同的Policy
+
+### Live Demo
+
+- 将ILM刷新时间设定为1秒,默认10分钟
+- 设置Hot / Warm /Cold和Delete四个阶段
+- 超过5个文档以后rollover
+- 10秒后进入warm
+- 15秒后进入Cold
+- 20秒后删除索引
 
 
 
+```
+# 运行三个节点，分片 将box_type设置成 hot，warm和cold
+# 具体参考 github下，docker-hot-warm-cold 下的docker-compose 文件
+
+DELETE *
+
+# 设置 1秒刷新1次，生产环境10分种刷新一次
+PUT _cluster/settings
+{
+  "persistent": {
+    "indices.lifecycle.poll_interval":"1s"
+  }
+}
+
+# 设置 Policy
+PUT /_ilm/policy/log_ilm_policy
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": {
+            "max_docs": 5
+          }
+        }
+      },
+      "warm": {
+        "min_age": "10s",
+        "actions": {
+          "allocate": {
+            "include": {
+              "box_type": "warm"
+            }
+          }
+        }
+      },
+      "cold": {
+        "min_age": "15s",
+        "actions": {
+          "allocate": {
+            "include": {
+              "box_type": "cold"
+            }
+          }
+        }
+      },
+      "delete": {
+        "min_age": "20s",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}
+
+
+
+# 设置索引模版
+PUT /_template/log_ilm_template
+{
+  "index_patterns" : [
+      "ilm_index-*"
+    ],
+    "settings" : {
+      "index" : {
+        "lifecycle" : {
+          "name" : "log_ilm_policy",
+          "rollover_alias" : "ilm_alias"
+        },
+        "routing" : {
+          "allocation" : {
+            "include" : {
+              "box_type" : "hot"
+            }
+          }
+        },
+        "number_of_shards" : "1",
+        "number_of_replicas" : "0"
+      }
+    },
+    "mappings" : { },
+    "aliases" : { }
+}
+
+
+
+#创建索引
+PUT ilm_index-000001
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "index.lifecycle.name": "log_ilm_policy",
+    "index.lifecycle.rollover_alias": "ilm_alias",
+    "index.routing.allocation.include.box_type":"hot"
+  },
+  "aliases": {
+    "ilm_alias": {
+      "is_write_index": true
+    }
+  }
+}
+
+# 对 Alias写入文档
+POST  ilm_alias/_doc
+{
+  "dfd":"dfdsf"
+}
+
+```
 
 
 
