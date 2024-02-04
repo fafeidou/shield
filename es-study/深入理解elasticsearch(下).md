@@ -909,7 +909,7 @@ GET tech_blogs/_search
 
 ## 建模建议(五):为索引的Mapping加入Meta信息
 
-![img.png](为索引的Mapping加入Meta信息.png)
+![img.png](img/为索引的Mapping加入Meta信息.png)
 
 ### 本章支持点
 
