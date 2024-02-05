@@ -32,6 +32,89 @@ org.geekbang.thinking.in.spring.ioc.overview.dependency.injection.DependencyInje
 - 更好的面向对象
 
 
+## BeanFactory与FactoryBean?
+
+- BeanFactory是IoC底层容器
+- FactoryBean是创建Bean的一种方式,帮助实现复杂的初始化逻辑
+
+## Spring IoC容器启动时做了哪些准备?
+
+IoC配置元信息读取和解析、IoC容器生命周期、Spring事件发布
+国际化等,更多答案将在后续专题章节逐一讨论
+
+# spring bean 基础
+
+## 初始化 Spring Bean
+
+- Bean 初始化 (Initialization)
+  - @PostConstruct标注方法
+  - 实现 InitializingBean接口的afterPropertiesSet方法
+  - 自定义初始化方法
+    - XML配置:<bean init-method=" init".../>
+    - Java注解:@Bean(initMethod="init")
+    - Java API: AbstractBeanDefinition#setInitMethodName (String)
+```dtd
+org.geekbang.thinking.in.spring.bean.definition.BeanInitializationDemo
+```
+
+## 延迟初始化SpringBean
+
+- Bean 延迟初始化(Lazy Initialization)
+  - XML 配置:<bean lazy-init="true
+  - Java注解:@Lazy(true)
+
+```dtd
+org.geekbang.thinking.in.spring.bean.definition.BeanInitializationDemo
+@Lazy(value = true)
+```
+
+## 销毁 Spring Bean
+
+- Bean 销毁(Destroy)
+  - @PreDestroy标注方法
+  - 实现 DisposableBean接口的 destroy()方法
+  - 自定义销毁方法
+    - XML配置:<beandestroy="destroy"
+    - Java注解:@Bean(destroy="destroy")
+    - Java API: AbstractBeanDefinition#setDestroyMethodNanme (String)
+
+## 如何注册一个SpringBean?
+
+通过 BeanDefinition和外部单体对象来注册
+```dtd
+org.geekbang.thinking.in.spring.bean.definition.SingletonBeanRegistrationDemo
+
+```
+## BeanDefinition 元信息
+
+![img.png](img/BeanDefinition元信息.png)
+
+- BeanDefinition 构建
+  - 通过 BeanDefinitionBuilder
+  - 通过AbstractBeanDefinition以及派生类
+
+```dtd
+org.geekbang.thinking.in.spring.bean.definition.BeanDefinitionCreationDemo
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
