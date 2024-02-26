@@ -13,6 +13,7 @@
     <modules>
         <module>ioc-container-overview</module>
         <module>spring-bean</module>
+        <module>dependency-lookup</module>
     </modules>
     <properties>
         <spring.version>5.2.2.RELEASE</spring.version>

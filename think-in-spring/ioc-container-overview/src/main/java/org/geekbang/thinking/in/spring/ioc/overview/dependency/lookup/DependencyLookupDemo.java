@@ -21,6 +21,7 @@ import org.geekbang.thinking.in.spring.ioc.overview.domain.User;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.util.Map;
@@ -38,14 +39,14 @@ public class DependencyLookupDemo {
         // 启动 Spring 应用上下文
         BeanFactory beanFactory = new ClassPathXmlApplicationContext("classpath:/META-INF/dependency-lookup-context.xml");
         // 按照类型查找
-        lookupByType(beanFactory);
+//        lookupByType(beanFactory);
         // 按照类型查找结合对象
-        lookupCollectionByType(beanFactory);
+//        lookupCollectionByType(beanFactory);
         // 通过注解查找对象
-        lookupByAnnotationType(beanFactory);
+//        lookupByAnnotationType(beanFactory);
 
 //        lookupInRealTime(beanFactory);
-//        lookupInLazy(beanFactory);
+        lookupInLazy(beanFactory);
     }
 
     private static void lookupByAnnotationType(BeanFactory beanFactory) {
@@ -73,6 +74,9 @@ public class DependencyLookupDemo {
         ObjectFactory<User> objectFactory = (ObjectFactory<User>) beanFactory.getBean("objectFactory");
         User user = objectFactory.getObject();
         System.out.println("延迟查找：" + user);
+        ObjectProvider<User> objectProvider =  beanFactory.getBeanProvider(User.class);
+        User user2 = objectProvider.getObject();
+        System.out.println("延迟查找：" + user2);
     }
 
     private static void lookupInRealTime(BeanFactory beanFactory) {

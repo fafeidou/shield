@@ -96,6 +96,106 @@ org.geekbang.thinking.in.spring.bean.definition.SingletonBeanRegistrationDemo
 ```dtd
 org.geekbang.thinking.in.spring.bean.definition.BeanDefinitionCreationDemo
 ```
+# Spring依赖查找
+
+## 单一类型依赖查找
+
+- 单一类型依赖查找接口-BeanFactory
+  - 根据Bean名称查找
+    - getBean (String)
+    - Spring 2.5覆盖默认参数:getBean(String,Object...)
+  - 根据 Bean类型查找
+    - Bean实时查找
+      - Spring 3.0getBean (Class)
+      - Spring4.1覆盖默认参数:getBean(Class, Object...)
+    - Spring 5.1 Bean 延迟查找
+      - getBeanProvider (Class)
+      - getBeanProvider (ResolvableType)
+  - 根据Bean名称+类型查找:getBean(String,Class)
+
+```dtd
+org.geekbang.thinking.in.spring.dependency.lookup.ObjectProviderDemo
+```
+
+## 集合类型依赖查找
+
+- 集合类型依赖查找接口-ListableBeanFactory
+  - 根据 Bean 类型查找
+    - 获取同类型Bean名称列表
+      - getBeanNamesForType (Class)
+      - Spring 4.2 getBeanNamesForType (ResolvableType)
+    - 获取同类型Bean实例列表
+      - getBeansOfType(Class) 以及重载方法
+  - 通过注解类型查找
+    - Spring3.0获取标注类型Bean名称列表
+      - getBeanNamesForAnnotation (Class<? extends Annotation)
+    - Spring3.0获取标注类型Bean实例列表
+      - getBeansWithAnnotation(Class<? extends Annotation>)
+    - Spring3.0获取指定名称+标注类型Bean实例
+      - findAnnotationOnBean (String, Class<? extends Annotatioon>
+
+```dtd
+org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupDemo
+```
+
+## 层次性依赖查找
+
+- 层次性依赖查找接口-HierarchicalBeanFactory
+  - 双亲BeanFactory:getParentBeanFactory()
+  - 层次性查找
+    - 根据Bean名称查找
+      - 基于containsLocalBean方法实现
+    - 根据 Bean 类型查找实例列表
+      - 单一类型:BeanFactoryUtils#bean0fType
+      - 集合类型:BeanFactoryUtils#beansOfTypeIncludingAncesstors
+    - 根据Java注解查找名称列表
+      - BeanFactoryUtils#beanNamesForTypeIncludingAncesttors
+
+```dtd
+org.geekbang.thinking.in.spring.dependency.lookup.HierarchicalDependencyLookupDemo
+```
+## 延迟依赖查找
+
+- Bean 延迟依赖查找接口
+  - org. springframework.beans.factory.ObjectFactory
+  - org. springframework.beans.factory.ObjectProvider
+    - Spring 5对 Java 8特性扩展
+      - 函数式接口
+        - get IfAvailable (Supplier)
+        - ifAvailable (Consumer)
+      - Stream 扩展-stream()
+
+```dtd
+org.geekbang.thinking.in.spring.dependency.lookup.ObjectProviderDemo
+```
+
+## 安全依赖查找
+
+![img.png](img/安全依赖查找.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
