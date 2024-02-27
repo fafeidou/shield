@@ -24,6 +24,7 @@
         <proguard-retrace.version>7.1.1</proguard-retrace.version>
         <java.version>8</java.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
+        <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
     </properties>
 
     <modules>
@@ -127,11 +128,11 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.3.0</version>
             </plugin>
-            <plugin>
+            <!--<plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.boot.version}</version>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>

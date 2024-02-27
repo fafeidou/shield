@@ -173,6 +173,196 @@ org.geekbang.thinking.in.spring.dependency.lookup.ObjectProviderDemo
 
 ![img.png](img/安全依赖查找.png)
 
+## 依赖查找中的经典异常
+
+![img.png](img/依赖查找中的经典异常.png)
+
+## ObjectFactory与BeanFactory的区别 ? 
+
+答: 
+1. ObjectFactory与BeanFactory均提供依赖查找的能力。
+2. 不过ObjectFactory仅关注一个或一种类型的Bean依赖查找,并
+且自身不具备依赖查找的能力,能力则由BeanFactory输出。
+BeanFactory则提供了单一类型、集合类型以及层次性等多种依赖查
+找方式。
+
+## BeanFactory.getBean操作是否线程安全
+
+答:BeanFactory.getBean方法的执行是线程安全的,换操作过程中会增加互
+斥锁
+
+# Spring IoC 注入
+
+## 依赖注入的模式和类型
+
+- 手动模式-配置或者编程的方式,提前安排注入规则
+  - XML资源配置元信息
+  - Java注解配置元信息
+  - API配置元信息
+- 自动模式-实现方提供依赖自动关联的方式,按照内建的注入规则
+  - AutoWiring(自动绑定)
+
+## 依赖注入的模式和类型
+
+![img.png](img/依赖注入的模式和类型.png)
+
+
+## 自动绑定(Autowiring)模式
+
+![img.png](img/自动绑定(Autowiring)模式.png)
+
+
+## Setter 方法注入
+
+- 手动模式
+  - XML资源配置元信息 injection.XmlDependencySetterInjectionDemo
+  - Java注解配置元信息 injection.AnnotationDependencySetterInjectionDemo
+  - API 配置元信息 injection.AnnotationDependencySetterInjectionDemo
+- 自动模式
+  - byName injection.AutoWiringByNameDependencySetterInjectionDemo
+  - byType
+
+## 构造器注入
+
+- 实现方法
+  - 手动模式
+    - XML资源配置元信息 injection.XmlDependencyConstructorInjectionDemo
+    - Java注解配置元信息 injection.AnnotationDependencyConstructorInjectionDemo
+    - API 配置元信息 injection.ApiDependencyConstructorInjectionDemo
+- 自动模式
+  - constructor injection.AutoWiringConstructorDependencyConstructorInjectionDemo
+
+
+## 字段注入
+
+- 实现方法
+  - 手动模式
+    - Java注解配置元信息 injection.AnnotationDependencyFieldInjectionDemo
+      - @Autowired
+      - @Resource 
+      - @Inject(可选)
+
+## 方法注入
+
+- 实现方法
+  - 手动模式
+    - Java注解配置元信息 injection.AnnotationDependencyMethodInjectionDemo
+      - @Autowired
+      - @Resource
+      - @Inject(可选)
+      - @Bean
+
+## 接口回调注入
+
+- injection.AwareInterfaceDependencyInjectionDemo
+
+![img.png](img/接口回调注入.png)
+
+![img.png](img/接口回调注入2.png)
+
+## 依赖注入类型选择
+
+- 注入选型
+  - 低依赖:构造器注入
+  - 多依赖:Setter方法注入
+  - 便利性:字段注入
+  - 声明类:方法注入
+
+## 基础类型注入
+
+- 基础类型
+  - 原生类型(Primitive):boolean、byte、char、short、int、float、long、double
+  - 标量类型(Scalar):Number、Character、Boolean、Enum、Locale、Charset、Currency、Properties、UUID
+  - 常规类型(General):Object、String、TimeZone、Calendar、Optional等
+  - Spring类型:Resource、InputSource、Formatter等
+
+
+## 集合类型注入
+
+- 集合类型
+  - 数组类型(Array):原生类型、标量类型、常规类型、Sprin类型
+  - 集合类型(Collection)
+    - Collection: List、Set (SortedSet、NavigableSet、EnuimSet
+    - Map: Properties
+
+## 限定注入
+
+- 使用注解@Qualifier限定 injection.QualifierAnnotationDependencyInjectionDemo
+  - 通过Bean名称限定
+  - 通过分组限定
+- 基于注解@Qualifier扩展限定
+  - 自定义注解-如SpringCloud@LoadBalanced
+
+## 延迟依赖注入
+- injection.LazyAnnotationDependencyInjectionDemo
+
+- 使用APIObjectFactory延迟注入
+  - 单一类型
+  - 集合类型
+- 使用APIObjectProvider延迟注入(推荐)
+  - 单一类型
+  - 集合类型
+
+
+## 依赖处理过程
+
+- 基础知识
+  - 入口 - DefaultListableBeanFactory#resolveDependenLcy
+  - 依赖描述符-DependencyDescriptor
+  - 自定绑定候选对象处理器-AutowireCandidateResolver
+
+
+## @Autowired 注入
+
+- @Autowired注入规则
+  - 非静态字段
+  - 非静态方法
+  - 构造器
+
+- @Autowired注入过程
+  - 元信息解析
+  - 依赖查找
+  - 依赖注入(字段、方法)
+
+## @Inject注入
+
+- @Inject注入过程
+  - 如果JSR-330存在于ClassPath中,复用AutowiredAnnotationBeanPostProcessor实现
+
+## Java通用注解注入原理
+
+- CommonAnnotationBeanPostProcessor
+  - 注入注解
+    - javax.xml.ws.WebServiceRef
+    - javax.ejb.EJB
+    - javax.annotation.Resource
+  - 生命周期注解
+    - javax.annotation.PostConstruct
+    - javax.annotation.PreDestroy
+
+## 自定义依赖注入注解
+
+- injection.AnnotationDependencyInjectionResolutionDemo
+
+- 基于AutowiredAnnotationBeanPostProcessor实现
+- 自定义实现
+  - 生命周期处理
+    - InstantiationAwareBeanPostProcessor
+    - MergedBeanDefinitionPostProcessor
+  - 元数据
+    - InjectedElement
+    - InjectionMetadata
+
+## 面试题
+
+### 有多少种依赖注入的方式?
+
+答:构造器注入 Setter注入 字段注入 方法注入 接口回调注入
+
+### 你偏好构造器注入还是Setter注入?
+
+答:两种依赖注入的方式均可使用,如果是必须依赖的话,那么推荐使用构造器注入,Setter注入用于可选依赖。
+
 
 
 
