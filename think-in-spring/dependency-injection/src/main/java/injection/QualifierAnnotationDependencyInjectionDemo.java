@@ -29,7 +29,7 @@ import java.util.Collection;
 /**
  * {@link Qualifier} 注解依赖注入
  *
- * @author 
+ * @author
  * @see Qualifier
  * @since
  */
@@ -67,20 +67,20 @@ public class QualifierAnnotationDependencyInjectionDemo {
 
     @Bean
     @Qualifier // 进行逻辑分组
-    public static User user2() {
+    public User user2() {
         return createUser(8L);
 
     }
 
     @Bean
     @UserGroup
-    public static User user3() {
+    public User user3() {
         return createUser(9L);
     }
 
     @Bean
     @UserGroup
-    public static User user4() {
+    public User user4() {
         return createUser(10L);
     }
 
@@ -113,9 +113,9 @@ public class QualifierAnnotationDependencyInjectionDemo {
         System.out.println("demo.user = " + demo.user);
         // 期待输出 user Bean
         System.out.println("demo.namedUser = " + demo.namedUser);
-        // 期待输出 superUser user user1 user2
+        // 期待输出 superUser user
         System.out.println("demo.allUsers = " + demo.allUsers);
-        // 期待输出 user1 user2
+        // 期待输出 user1 user2 user3 user4
         System.out.println("demo.qualifiedUsers = " + demo.qualifiedUsers);
         // 期待输出 user3 user4
         System.out.println("demo.groupedUsers = " + demo.groupedUsers);

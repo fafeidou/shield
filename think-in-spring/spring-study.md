@@ -363,6 +363,19 @@ BeanFactory则提供了单一类型、集合类型以及层次性等多种依赖
 
 答:两种依赖注入的方式均可使用,如果是必须依赖的话,那么推荐使用构造器注入,Setter注入用于可选依赖。
 
+# Spring IoC依赖来源
+
+## 依赖查找的来源
+
+![img.png](img/依赖查找的来源.png)
+
+- Spring 内建 BeanDefinition
+
+![img.png](img/Spring 内建 BeanDefinition(1).png)
+
+
+
+![img.png](Spring 内建 BeanDefinition(2).png)
 
 
 
@@ -370,15 +383,9 @@ BeanFactory则提供了单一类型、集合类型以及层次性等多种依赖
 
 
 
+# 参考博客
 
-
-
-
-
-
-
-
-
+> https://blog.csdn.net/xiewenfeng520/category_9912098.html
 
 
 
