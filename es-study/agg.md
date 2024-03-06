@@ -2,7 +2,7 @@
 
 > select last(record) from t group by test_demo order by timestamp desc 
 
-```dtd
+```json
 {
     "size":0,
     "query":{
