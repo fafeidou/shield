@@ -115,6 +115,7 @@ org.geekbang.thinking.in.spring.bean.definition.BeanDefinitionCreationDemo
 
 ```dtd
 org.geekbang.thinking.in.spring.dependency.lookup.ObjectProviderDemo
+org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupDemo.lookupByType
 ```
 
 ## 集合类型依赖查找
@@ -136,6 +137,7 @@ org.geekbang.thinking.in.spring.dependency.lookup.ObjectProviderDemo
 
 ```dtd
 org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupDemo
+org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupDemo.lookupCollectionByType
 ```
 
 ## 层次性依赖查找
@@ -154,6 +156,12 @@ org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupD
 ```dtd
 org.geekbang.thinking.in.spring.dependency.lookup.HierarchicalDependencyLookupDemo
 ```
+## 实时查找
+
+```java
+org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupDemo.lookupInRealTime
+```
+
 ## 延迟依赖查找
 
 - Bean 延迟依赖查找接口
@@ -165,8 +173,12 @@ org.geekbang.thinking.in.spring.dependency.lookup.HierarchicalDependencyLookupDe
         - ifAvailable (Consumer)
       - Stream 扩展-stream()
 
+
+这里的延迟就是说，通过其他的对象来获取 user 对应的 Bean
+
 ```dtd
 org.geekbang.thinking.in.spring.dependency.lookup.ObjectProviderDemo
+org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupDemo.lookupInLazy
 ```
 
 ## 安全依赖查找
@@ -192,6 +204,10 @@ BeanFactory则提供了单一类型、集合类型以及层次性等多种依赖
 斥锁
 
 # Spring IoC 注入
+
+## 入门demo
+
+org.geekbang.thinking.in.spring.ioc.overview.dependency.injection.DependencyInjectionDemo
 
 ## 依赖注入的模式和类型
 
@@ -363,6 +379,395 @@ BeanFactory则提供了单一类型、集合类型以及层次性等多种依赖
 
 答:两种依赖注入的方式均可使用,如果是必须依赖的话,那么推荐使用构造器注入,Setter注入用于可选依赖。
 
+# 谁才是 Spring IoC 容器
+
+```java
+/**
+ * 依赖注入示例
+ */
+public class DependencyInjectionDemo {
+    public static void main(String[] args) {
+        //配置 xml 配置文件
+        //启动 spring 应用上下文
+        BeanFactory beanFactory = new ClassPathXmlApplicationContext("classpath:/META-INF/dependency-injection-context.xml ");
+        //自定义Bean
+        UserRepository userRepository = beanFactory.getBean("userRepository", UserRepository.class);
+        
+        whoIsIocContainer(userRepository, beanFactory);
+    }
+
+    private static void whoIsIocContainer(UserRepository userRepository, BeanFactory beanFactory) {
+
+        // ConfigurableApplicationContext -> ApplicationContext -> BeanFactory
+        // 在上下文的实现中采用的是组合模式，org.springframework.context.support.AbstractRefreshableApplicationContext 中
+        // 在接口的实现上又继承了 BeanFactory
+        System.out.println("userRepository.getBeanFactory():" + userRepository.getBeanFactory());
+        System.out.println("beanFactory:" + beanFactory);
+        System.out.println("两者是否相等:" + (userRepository.getBeanFactory() == beanFactory));
+
+    }
+
+}
+
+```
+
+那么DefaultListableBeanFactory 和 ClassPathXmlApplicationContext这两个对象是什么关系？
+
+ApplicationContext 就是 BeanFactory，但是他们是两个不同的对象，BeanFactory 提供框架配置和基本功能，ApplicationContext 是 BeanFactory 的一个超集，一个子接口，ApplicationContext 提供更多的企业特性。
+
+ApplicationContext 除了 IOC 容器角色，还提供
+
+- 面向切面 (AOP)
+- 配置元信息(Configuration Metadata)
+- 资源配置(Resource)
+- 事件(Events)
+- 国际化(i18n)
+- 注解(Annotations)
+- Environment 抽象(Environment Abstraction)
+
+## 源码分析
+
+ApplicationContext 的层次关系比较复杂，我们直接定位到相关的类
+
+- org.springframework.context.support.AbstractRefreshableApplicationContext
+
+```java
+public abstract class AbstractRefreshableApplicationContext extends AbstractApplicationContext {
+
+	@Nullable
+	private Boolean allowBeanDefinitionOverriding;
+
+	@Nullable
+	private Boolean allowCircularReferences;
+
+	/** Bean factory for this context. */
+	@Nullable
+	private DefaultListableBeanFactory beanFactory;
+
+```
+
+- AbstractRefreshableApplicationContext 用组合的方式，获取到 BeanFactory 的默认实现 DefaultListableBeanFactory
+
+- 再看它的父类AbstractApplicationContext 中的 getBean()方法，其实是getBeanFactory()获取的这个 DefaultListableBeanFactory 对象，
+再调用 beanFactory.getBean(name) 方法来获取 Bean 对象，最终还是 BeanFactory 来获取 Bean 对象。
+
+由此可见，其实真正的底层 IoC 容器其实是 BeanFactory 。
+
+```java
+
+public abstract class AbstractApplicationContext extends DefaultResourceLoader
+		implements ConfigurableApplicationContext {
+
+    //---------------------------------------------------------------------
+    // Implementation of BeanFactory interface
+    //---------------------------------------------------------------------
+
+    @Override
+    public Object getBean(String name) throws BeansException {
+        assertBeanFactoryActive();
+        return getBeanFactory().getBean(name);
+    }
+
+    @Override
+    public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
+        assertBeanFactoryActive();
+        return getBeanFactory().getBean(name, requiredType);
+    }
+
+    @Override
+    public Object getBean(String name, Object... args) throws BeansException {
+        assertBeanFactoryActive();
+        return getBeanFactory().getBean(name, args);
+    }
+}
+
+```
+
+## 结论
+
+- ApplicationContext 是 BeanFactory 的一个超集，一个子接口；BeanFactory 提供框架配置和基本功能，ApplicationContext 提供更多的企业特性。
+
+- BeanFactory 才是真正的底层的 IoC 容器，因为 ApplicationContext 最终还是通过组合 BeanFactory 来实现 getBean() 方法
+
+# Spring Bean 定义
+
+## 什么是 Spring Bean 的定义，或者说它是用来做什么？
+
+Spring 应用上下文启动时，将Xml文件、注解、API等等信息解析成 BeanDefinition 。通过依赖查找 getBean() 等方式获取 Bean 的对象时，
+容器获取到 Bean 定义相关的元信息，通过这些信息来创建对应 Bean 对象。
+
+BeanDefinition 是 Spring FrameWork 中定义 Bean 的配置元信息接口
+
+- Bean 的类名
+- Bean 行为配置元素，如作用域、自动绑定模式、生命周期回调等等
+- 其他Bean引用，又可称作 合作者（Collaborators）或者 依赖（Dependencies）
+- 配置设置，比如Bean属性（Properties）
+
+## BeanDefinition元信息
+
+![img.png](img/BeanDefinition元信息3.png)
+
+
+## Spring Bean 的命名
+
+### Bean 名称
+
+可以类比 xml配置文件<bean …>的 id、name 属性。
+
+- 每个 Bean 拥有一个或者多个标识符（identifiers），这些标识符在 Bean 所在的容器必须是唯一的。通常一个 Bean 仅有一个标识符，如果需要额外的，可考虑使用别名（Alias）来扩充
+- 在基于 XML 的配置元信息中，开发人员可用 id 或者 name 属性来规定 Bean 的标识符。通常 Bean 的标识符由字母组成，允许出现特殊字符；如果想要引入 Bean 的别名的话，
+  可以在 name 属性使用半角逗号（,）或者分好（;）来间隔。
+- Bean 的 id 或者 name 属性并非必须制定，如果留空的话，容器会为 Bean 自动生成一个唯一的名称。Bean 的命名尽管没有限制，不过官方建议采用驼峰的方式，更符合 Java 命名规范。
+
+
+### Bean名称生成器
+
+- org.springframework.beans.factory.support.BeanNameGenerator#generateBeanName（since Spring 2.0.3）
+  - DefaultBeanNameGenerator
+  - AnnotationBeanNameGenerator
+
+我们可以看下其中一个实现
+
+```java
+
+	public static String generateBeanName(
+			BeanDefinition definition, BeanDefinitionRegistry registry, boolean isInnerBean)
+			throws BeanDefinitionStoreException {
+
+		String generatedBeanName = definition.getBeanClassName();
+	
+		String id = generatedBeanName;
+		if (isInnerBean) {//如果是内嵌的 BeanName +'#'+ hashCode
+			// Inner bean: generate identity hashcode suffix.
+			id = generatedBeanName + GENERATED_BEAN_NAME_SEPARATOR + ObjectUtils.getIdentityHexString(definition);
+		}
+		else {//如果是唯一的
+			// BeanName +'#'+ 数字
+			return uniqueBeanName(generatedBeanName, registry);
+		}
+		return id;
+	}
+
+```
+
+### Spring Bean 的别名
+
+Bean 别名（Alias）的价值
+
+- 复用现有的 BeanDefinition
+- 更具有场景化的命名方法
+
+org.geekbang.thinking.in.spring.bean.definition.BeanAliasDemo
+
+# Spring Bean 注册、实例化、初始化、销毁
+
+## 注册 Spring Bean
+BeanDefinition 注册有以下方式
+
+- XML 配置元信息
+  - <bean name="" …/>
+- Java 注解配置元信息
+  - @Bean
+  - @Component
+  - @Import
+- Java API 配置元信息
+  - 命名方式：BeanDefinitionRegistry#registerBeanDefinition(String,BeanDefinition)
+  - 非命名方式：BeanDefinitionReaderUtils#registerWithGeneratedName
+  - 配置类方式：AnnotatedBeanDefinitionReader#register(Class<?>… componentClasses)
+
+### 注册示例
+
+#### Java 注解配置元信息
+
+@Bean 方式定义
+@Component 方式定义
+- org.geekbang.thinking.in.spring.bean.definition.AnnotationBeanDefinitionDemo
+
+```java
+
+@Component // 定义当前类作为 Spring Bean（组件）
+    public static class Config {
+
+        // 1. 通过 @Bean 方式定义
+
+        /**
+         * 通过 Java 注解的方式，定义了一个 Bean
+         */
+        @Bean(name = {"user", "xiaomage-user"})
+        public User user() {
+            User user = new User();
+            user.setId(1L);
+            user.setName("小马哥");
+            return user;
+        }
+    }
+```
+
+#### 通过 @Import 来进行导入
+
+```java
+@Import(AnnotationBeanDefinitionDemo.Config.class)
+public class AnnotationBeanDefinitionDemo {
+}
+```
+
+#### Java API 配置元信息
+
+- org.geekbang.thinking.in.spring.bean.definition.AnnotationBeanDefinitionDemo
+
+## 实例化 Spring Bean
+
+Bean 实例化（Instantiation）
+
+- 常规方式
+  - 通过构造器（配置元信息：XML、Java 注解和 Java API）
+  - 通过静态工厂方法（配置元信息：XML和 Java API）
+  - 通过 Bean 工厂方法（配置元信息：XML和 Java API）
+  - 通过 FactoryBean （配置元信息：XML、Java 注解和 Java API）
+- 特殊方式
+  - 通过 ServiceLoaderFactoryBean（配置元信息：XML、Java 注解和 Java API）
+  - 通过 AutowireCapableBeanFactory#createBean(java.lang.Class,int,boolean)
+  - 通过 BeanDefinitionRegistry#registerBeanDefinition(String,BeanDefinition)
+
+### 常规方式
+
+**通过构造器**
+
+- xml：<bean id=“user” …> 默认是通过构造器方式
+- @Bean 在上一章已经展示过了
+
+**通过静态工厂方法**
+
+**通过 Bean 工厂方法**
+
+**通过 FactoryBean**
+
+
+- org.geekbang.thinking.in.spring.bean.definition.BeanInstantiationDemo
+
+我们再新建一个bean-instantiation-context.xml文件
+
+### 特殊方式
+
+- org.geekbang.thinking.in.spring.bean.definition.SpecialBeanInstantiationDemo
+
+
+**BeanDefinitionRegistry#registerBeanDefinition**
+
+**ServiceLoaderFactoryBean**
+
+special-bean-instantiation-context.xml
+
+**AutowireCapableBeanFactory#createBean**
+
+## 初始化 Spring Bean
+
+**Bean 初始化（Initialization）**
+
+- @PostConstruct 标注方法
+- 实现 InitializingBean 接口的 afterPropertiesSet() 方法
+- 自定义初始化方法
+  - XML 配置：<bean init-method=“init” …/>
+  - Java 注解：@Bean(initMethod=“init”)
+  - Java API：AbstractBeanDefinition#setInitMethodName(String)
+    - @Bean(initMethod=“init”) 这种方式，最后方法执行的调用链也会进到这个 API 中
+
+- BeanInitializationDemo
+
+
+### 延迟初始化 Spring Bean
+
+Bean 延迟初始化（Lazy Initialization）
+
+- XML 配置：<bean lazy-init=“true” …/>
+- Java 注解：@Lazy(true)
+
+```java
+@Bean(initMethod = "initUserFactory", destroyMethod = "doDestroy")
+    @Lazy(value = true)
+    public UserFactory userFactory() {
+        return new DefaultUserFactory();
+    }
+    
+```
+
+问题：当某个 Bean 定义为延迟初始化，那么 Spring 容器返回的对象与非延迟的对象存在怎样的差异？
+
+非延迟初始化在 Spring 应用上下文启动完成后，已经被初始化。
+
+加上了@Lazy
+
+![img.png](img/加上了@Lazy.png)
+
+不加@Lazy
+
+![img_1.png](img/不加@Lazy.png)
+
+当 Bean 定义为延迟初始化，初始化的过程是在 Spring 应用上下文启动之后，在本例子中通过applicationContext.getBean(UserFactory.class) 
+触发 Bean 的初始化。延迟初始化和非延迟初始化在 Bean 的定义上面没有区别，但是在依赖查找或者依赖注入有所不同。
+
+#### 源码分析
+在 AbstractApplicationContext 的 refresh() 方法中，会初始化所有非延迟初始化的 singletons
+
+- org.springframework.context.support.AbstractApplicationContext#finishBeanFactoryInitialization
+
+```java
+// Instantiate all remaining (non-lazy-init) singletons.
+finishBeanFactoryInitialization(beanFactory);
+```
+
+#### 总结
+
+- 没有@Lazy就是在spring容器执行refresh中最后执行finishBeanFactoryInitialization初始化多有单例
+- 有@Lazy就是在首次调用的时候，即getBean的时候调用
+- 所谓初始化底层原理都是通过spring生命周期中回调完成的，调用初始化逻辑都是一样的，只是时机不一样
+
+## 销毁 Spring Bean
+
+Bean 销毁（Destroy）
+
+- @PreDestroy 标注方法
+- 实现 DisposableBean 接口的 destroy 方法
+- 自定义销毁方法
+  - XML 配置：<bean destroy=“destroy” …/>
+  - Java 注解：@Bean(destroy=“init”)
+  - Java API：AbstractBeanDefinition#setDestroyMethodName(String)
+
+```java
+
+org.geekbang.thinking.in.spring.bean.definition.BeanInitializationDemo
+
+```
+
+说明applicationContext.close()应用上下文关闭的时候进行 Bean 的销毁。
+
+源码实际调用的位置：
+
+org.springframework.context.support.AbstractApplicationContext#destroyBeans
+
+
+## 垃圾回收
+
+Bean 垃圾回收（GC）
+
+关闭 Spring 容器
+- 执行 GC
+- Spring Bean 覆盖 finalize() 方法被回调
+- 垃圾回收时，此方法会被回调
+
+### DefaultUserFactory 重写 finalize()方法
+
+## 面试
+
+### 通过 BeanDefinition 和外部单体对象来注册
+
+- org.geekbang.thinking.in.spring.bean.definition.SingletonBeanRegistrationDemo
+
+### 什么是 Spring BeanDefinition?
+
+参考 BeanDefinition元信息
+
+
 # Spring IoC依赖来源
 
 ## 依赖查找的来源
@@ -374,9 +779,7 @@ BeanFactory则提供了单一类型、集合类型以及层次性等多种依赖
 ![img.png](img/Spring 内建 BeanDefinition(1).png)
 
 
-
 ![img.png](img/Spring 内建 BeanDefinition(2).png)
-
 
 # Spring Bean 作用域
 
@@ -1180,7 +1583,7 @@ preInstantiateSingletons 在 AbstractApplicationContext 场景非常重要，有
   - 实现 DisposableBean 接口的 destroy() 方法
   - 自定义销毁方法
 
-![img.png](destoryBean.png)
+![img.png](img/destoryBean.png)
 
 
 

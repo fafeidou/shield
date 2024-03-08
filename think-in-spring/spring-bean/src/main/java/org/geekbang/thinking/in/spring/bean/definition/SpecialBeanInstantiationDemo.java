@@ -40,11 +40,12 @@ public class SpecialBeanInstantiationDemo {
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:/META-INF/special-bean-instantiation-context.xml");
         // 通过 ApplicationContext 获取 AutowireCapableBeanFactory
         AutowireCapableBeanFactory beanFactory = applicationContext.getAutowireCapableBeanFactory();
-
+        // 第二种方式：通过 ServiceLoaderFactoryBean
         ServiceLoader<UserFactory> serviceLoader = beanFactory.getBean("userFactoryServiceLoader", ServiceLoader.class);
 
         displayServiceLoader(serviceLoader);
 
+        //第一种方式：这种直接通过 ClassLoader 得到 ServiceLoader
 //        demoServiceLoader();
 
         // 创建 UserFactory 对象，通过 AutowireCapableBeanFactory

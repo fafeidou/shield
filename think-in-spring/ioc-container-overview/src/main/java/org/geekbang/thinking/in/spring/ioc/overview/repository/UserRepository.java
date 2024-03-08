@@ -35,7 +35,7 @@ public class UserRepository {
 
     private BeanFactory beanFactory; // 內建非 Bean 对象（依赖）
 
-    private ObjectFactory<ApplicationContext> objectFactory;
+    private ObjectFactory<ApplicationContext> objectFactory; // 延时注入
 
     public Collection<User> getUsers() {
         return users;

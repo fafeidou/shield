@@ -49,6 +49,10 @@ public class DependencyInjectionDemo {
         System.out.println(userFactory.getObject() == applicationContext);
 
         // 依赖查找（错误）
+        //抛出了NoSuchBeanDefinitionException异常，表示无法获取到 Bean 的定义。为什么在依赖注入的时候，
+        // 可以获取到DefaultListableBeanFactory对象，但是通过依赖查找无法获取，证明 依赖查找 和 依赖注入 并不一样，
+        // 依赖的来源不同，这种对象称为 非 Bean 对象或者说是 内建依赖
+
 //        System.out.println(beanFactory.getBean(BeanFactory.class));
 
         // 依赖来源三：容器內建 Bean
@@ -63,7 +67,8 @@ public class DependencyInjectionDemo {
         // ConfigurableApplicationContext <- ApplicationContext <- BeanFactory
 
         // ConfigurableApplicationContext#getBeanFactory()
-
+        System.out.println("userRepository.getBeanFactory():" + userRepository.getBeanFactory());
+        System.out.println("applicationContext:" + applicationContext);
 
         // 这个表达式为什么不会成立
         System.out.println(userRepository.getBeanFactory() == applicationContext);

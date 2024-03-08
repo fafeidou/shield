@@ -46,7 +46,9 @@ public class DependencyLookupDemo {
 //        lookupByAnnotationType(beanFactory);
 
 //        lookupInRealTime(beanFactory);
-        lookupInLazy(beanFactory);
+
+        lookupByNameAndType(beanFactory);
+        //lookupInLazy(beanFactory);
     }
 
     private static void lookupByAnnotationType(BeanFactory beanFactory) {
@@ -83,4 +85,11 @@ public class DependencyLookupDemo {
         User user = (User) beanFactory.getBean("user");
         System.out.println("实时查找：" + user);
     }
+
+
+    private static void lookupByNameAndType(BeanFactory beanFactory) {
+        User user = beanFactory.getBean("user",User.class);
+        System.out.println("名称类型查找---" + user);
+    }
+
 }
