@@ -156,6 +156,79 @@ org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupD
 ```dtd
 org.geekbang.thinking.in.spring.dependency.lookup.HierarchicalDependencyLookupDemo
 ```
+
+### 结合部分源码
+
+HierarchicalBeanFactory#getParentBeanFactory() 方法表明了他具有层次性，其实是一种双亲委派模式的实现。
+
+ConfigurableBeanFactory 继承了 HierarchicalBeanFactory，从而也具有了层次性
+
+```java
+public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, SingletonBeanRegistry {}
+```
+
+ConfigurableListableBeanFactory 又继承了 ConfigurableBeanFactory，通过这种组合的方式使得 ConfigurableListableBeanFactory
+具有了可配置性(Configurable)、集合遍历性(Listable)、层次性(Hierarchical)等等，下面我们用这个层次性实现类来演示相关代码。
+
+```java
+public interface ConfigurableListableBeanFactory
+		extends ListableBeanFactory, AutowireCapableBeanFactory, ConfigurableBeanFactory {
+}
+
+```
+
+### LocalBean 示例
+
+```java
+private static void displayContainsLocalBean(HierarchicalBeanFactory beanFactory, String beanName) {
+        System.out.printf("当前 BeanFactory[%s] 是否包含 Local Bean[name : %s] : %s\n", beanFactory, beanName,
+                beanFactory.containsLocalBean(beanName));
+    }
+    
+```
+
+判断当前 BeanFactory 是否包含这个 Bean，不会判断父BeanFactory中是否包含
+
+```java
+private static boolean containsBean(HierarchicalBeanFactory beanFactory, String beanName) {
+        BeanFactory parentBeanFactory = beanFactory.getParentBeanFactory();
+        if (parentBeanFactory instanceof HierarchicalBeanFactory) {
+            HierarchicalBeanFactory parentHierarchicalBeanFactory = HierarchicalBeanFactory.class.cast(parentBeanFactory);
+            if (containsBean(parentHierarchicalBeanFactory, beanName)) {
+                return true;
+            }
+        }
+        return beanFactory.containsLocalBean(beanName);
+}
+
+```
+
+### BeanFactoryUtils
+
+Spring 中也有类似的实现，也是通过递归的方式。
+
+org.springframework.beans.factory.BeanFactoryUtils#beanNamesForTypeIncludingAncestors()
+
+
+```java
+
+	public static String[] beanNamesForTypeIncludingAncestors(ListableBeanFactory lbf, ResolvableType type) {
+		Assert.notNull(lbf, "ListableBeanFactory must not be null");
+		String[] result = lbf.getBeanNamesForType(type);
+		if (lbf instanceof HierarchicalBeanFactory) {
+			HierarchicalBeanFactory hbf = (HierarchicalBeanFactory) lbf;
+			if (hbf.getParentBeanFactory() instanceof ListableBeanFactory) {
+				String[] parentResult = beanNamesForTypeIncludingAncestors(
+						(ListableBeanFactory) hbf.getParentBeanFactory(), type);
+				result = mergeNamesWithParent(result, parentResult, hbf);
+			}
+		}
+		return result;
+	}
+```
+
+
+
 ## 实时查找
 
 ```java
@@ -177,17 +250,45 @@ org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupD
 这里的延迟就是说，通过其他的对象来获取 user 对应的 Bean
 
 ```dtd
+
 org.geekbang.thinking.in.spring.dependency.lookup.ObjectProviderDemo
 org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupDemo.lookupInLazy
+
 ```
 
 ## 安全依赖查找
 
 ![img.png](img/安全依赖查找.png)
 
+```java
+org.geekbang.thinking.in.spring.dependency.lookup.TypeSafetyDependencyLookupDemo
+```
+
+## 内建可查找的依赖
+
+AbstractApplicationContext 内建可查找的依赖
+![img.png](img/内建可查找的依赖.png)
+
+注解驱动 Spring 应用上下文内建可查找的依赖（部分）
+
+相关细节：
+
+org.springframework.context.annotation.AnnotationConfigUtils
+
+- registerAnnotationConfigProcessors()
+
+![img.png](img/registerAnnotationConfigProcessors.png)
+
 ## 依赖查找中的经典异常
 
 ![img.png](img/依赖查找中的经典异常.png)
+
+- NoUniqueBeanDefinitionException 当前上下文中存在多个相同类型 Bean 的定义
+  - NoUniqueBeanDefinitionExceptionDemo
+- BeanInstantiationException 当 Bean 所对应的类型非具体类时，比如是一个接口CharSequence
+  - BeanInstantiationExceptionDemo
+- BeanCreationException  Bean 创建过程中发生异常
+  - BeanCreationExceptionDemo
 
 ## ObjectFactory与BeanFactory的区别 ? 
 
@@ -202,6 +303,347 @@ BeanFactory则提供了单一类型、集合类型以及层次性等多种依赖
 
 答:BeanFactory.getBean方法的执行是线程安全的,换操作过程中会增加互
 斥锁
+
+# Spring IoC 依赖注入
+
+## 手动模式 - 配置或者编程的方式
+
+- XML 资源配置元信息
+- Java 注解配置元信息
+- API 配置元信息
+
+自动模式 - 实现方提供依赖自动关联的方式，按照内建的注入规则
+
+- Autowiring （自动绑定）
+
+
+### 依赖注入类型
+
+![img.png](img/依赖注入类型.png)
+
+## 自动绑定（Autowiring）
+
+
+Spring 容器能在合作的 Bean 之间进行自动的关系绑定。两个优点：
+
+- Autowiring 可以有效的减少我们一些属性或者构造器参数
+  - 有利有弊，节省了一些代码，但是如果引用的name或者其他属性发生变化，这个自动绑定可能会失效，其实显示的绑定比自动绑定让代码健壮性更好。
+- Autowiring 可以更新我们配置，当对象是在升级的时候。
+  - 简单来说，自动绑定注入的对象如果发生了变化，这个自动绑定关系也会引用到这个新的对象（其实这个应该是 Java 语言的特性）
+
+### 自动绑定（Autowiring）模式
+
+Autowiring modes
+
+![img.png](img/Autowiring modes.png)
+
+
+### 自动绑定（Autowiring）限制和不足
+
+- 不支持原生类型，例如 String
+- 缺乏精确性
+- 如果有多个 Bean 对象，使用 byType 这种就容易出错
+
+## Setter 方法依赖注入
+
+实现方法
+
+- 手动模式
+  - XML 资源配置元信息
+  - Java 注解配置元信息
+  - API 配置元信息
+- 自动模式
+  - byName
+  - byType
+
+### XML 资源配置元信息
+
+- injection.XmlDependencySetterInjectionDemo
+
+xml 中我们配置注入ref="superUser"
+
+### Java 注解配置元信息
+
+这里需要说明一点
+
+public UserHolder userHolder(User user) {... 中方法参数 user 是通过 @Bean 方法注入的方式进行的
+
+- injection.AnnotationDependencySetterInjectionDemo
+
+### API 配置元信息
+
+- injection.ApiDependencySetterInjectionDemo
+
+### 自动绑定
+
+- autowiring-dependency-setter-injection.xml
+- AutoWiringByNameDependencySetterInjectionDemo
+
+如果将 xml 文件中的byName修改为byType,那么会根据类型找到 User 和 SuperUser 两个对象，
+但是由于SuperUser中有primary属性，所以会将 SuperUser 注入到 UserHolder 对象中。
+
+## 构造器依赖注入
+
+实现方法
+
+- 手动模式
+  - XML 资源配置元信息
+  - Java 注解配置元信息
+  - API 配置元信息
+- 自动模式
+  - constructor
+
+### XML 资源配置元信息
+
+- injection.AutoWiringConstructorDependencyConstructorInjectionDemo
+- autowiring-dependency-constructor-injection.xm
+
+### Java 注解配置元信息
+
+- injection.AnnotationDependencyConstructorInjectionDemo
+
+### API 配置元信息
+
+- injection.ApiDependencyConstructorInjectionDemo
+
+### 自动绑定
+只是 xml 配置文件
+
+<bean class="injection.UserHolder" autowire="constructor即可">中的 byName 改成 constructor即可。
+
+- injection.AutoWiringConstructorDependencyConstructorInjectionDemo
+
+输出为SuperUser，因为SuperUser标记为primary=true，根据类型注入
+
+## 字段注入
+
+实现方法
+
+- 手动模式
+  - Java 注解配置元信息
+    - @Autowired
+    - @Resource
+    - @Inject(可选) JSR-330
+
+- injection.AnnotationDependencyFieldInjectionDemo
+
+通过 @Autowired 和 @Resource 注入的对象其实是同一个对象，因为 Spring IoC 容器默认的 Bean 作用域是 singleton。
+
+## 方法注入
+
+实现方法
+
+- 手动模式
+  - Java 注解配置元信息
+    - @Autowired
+    - @Resource
+    - @Inject(可选) JSR-330
+    - @Bean
+
+## 回调注入
+
+Aware系列接口回调
+
+![img.png](img/Aware系列接口回调.png)
+
+- injection.AwareInterfaceDependencyInjectionDemo
+
+## 依赖注入类型选择
+
+这么多的注入类型，我们平时该怎么选择和使用呢？
+
+- 低依赖：构造器注入
+  - 强制依赖注入，依赖比较少，参数比较少的情况推荐使用（官方推荐）
+- 多依赖：Setter 方法注入
+  - 多依赖，如果依赖之间存在前后依赖关系的话，尽量不要用这种方式注入
+- 便利性：字段注入
+  - 仅关注与需要注入的字段，但是这种官方并不推荐，在后续的 SpringBoot 版本中都属于淘汰状态
+- 声明类：方法注入
+  - 建议多使用@Bean这种方式进行注入，配合其他注入方式。
+
+
+## 基础类型注入
+
+基础类型
+
+- 原生类型（Primitive）：boolean、byte、char、short、int、float、long、double
+- 标量类型（Scalar）：Number、Character、Boolean、Enum、Locale、Charset、Currency、Porperties、UUID
+- 常规类型（General）：Object、String、TimeZone、Calendar、Optional 等等
+- Spring 类型：Resource、InputSource、Formatter 等等
+
+### Enum类型
+
+比如我们 User 类里面加一个 City 枚举类型的字段，表示这个用户是哪个城市的。
+
+我们先建一个 Enum 类型的 City 类
+
+```xml
+
+<bean id="user" class="org.geekbang.thinking.in.spring.ioc.overview.domain.User">
+  <property name="id" value="1"/>
+  <property name="name" value="小马哥"/>
+  <property name="city" value="HANGZHOU"/>
+</bean>
+
+```
+
+### Resource 类型
+在上面的基础之上
+
+User 增加 private Resource configFileResource;和对应的 set/get 方法。
+
+在 resources/META_INF目录下新建 user-config.properties 文件
+
+```xml 
+
+<bean id="user" class="org.geekbang.thinking.in.spring.ioc.overview.domain.User">
+        <property name="id" value="1"/>
+        <property name="name" value="小马哥"/>
+        <property name="city" value="HANGZHOU"/>
+        <property name="configFileLocation" value="classpath:/META-INF/user-config.properties"/>
+</bean>
+
+```
+
+## 集合类型注入
+
+集合类型
+
+- 数组类型（Array）：原生类型、标量类型、常规类型、Spring类型
+- 集合类型（Collection）：
+  - Collection：List、Set（SortedSet、NavigableSet、EnumSet）
+  - Map：Properties
+
+Enum类型 中 User 的 private City[] cities;
+
+Enum类型 中 User 新增字段 private List<City> lifeCities;
+
+
+xml 中 新增 lifeCities 属性
+
+```xml
+
+  <bean id="user" class="org.geekbang.thinking.in.spring.ioc.overview.domain.User">
+    <property name="workCities" value="BEIJING,HANGZHOU"/>
+    <property name="lifeCities">
+      <list>
+        <value>BEIJING</value>
+        <value>SHANGHAI</value>
+      </list>
+    </property>
+  </bean>
+
+```
+
+## 限定注入
+
+使用注解 @Qualifier 限定
+
+- 通过 Bean 名称限定
+- 通过分组限定
+
+基于注解 @Qualifier 扩展限定
+
+- 自定义注解 - 如 Spring Cloud @LoadBalanced
+
+
+### 通过 Bean 名称限定
+
+- injection.QualifierNameAnnotationDependencyInjectionDemo
+
+普通的 user1 对象通过类型注入的方式，注入了 superUser 对象。
+
+而加了 @Qualifier("user") 的 user 通过 user名称的限定，注入了 user 对象
+
+### 分组
+
+- injection.QualifierNameAnnotationDependencyInjectionDemo
+
+标有 @Bean、@Qualifier的 userGroup() 方法被注入到标有 @Qualifier 的 user_group 字段上。
+
+### 集合分组
+
+我们再加入一个 User 的定义 和 Collection<User>，都用 @Qualifier 进行标注
+
+### 元标注分组
+
+- injection.QualifierNameAnnotationDependencyInjectionDemo
+
+由结果可知
+
+- 通过名称user限定，注入了对应的 user 对象
+- 通过 @Qualifier 分组，注入了 标有@Qualifier对象，如果有多个，那么使用 @Primary 表示主要依赖
+- 通过集合的方式 Collection<User> allUsers，将所有的 User 类型注入，有 6 个对象
+- 通过 @Qualifier+集合的方式 Collection<User> allUsers_group ，将所有标注 @Qualifier 的User 类型注入，有 4 个对象，分别为两个 @Qualifier 标注，两个 @UserGroup 标注
+- 通过 @UserGroup+集合的方式 Collection<User> allUsers_group_annotation ，将所有标注 @UserGroup 的User 类型注入，有 2 个对象
+
+## 延迟依赖注入
+
+使用 API ObjectFactory 延迟注入
+
+- 单一类型
+- 集合类型
+- 
+使用 API ObjectProvider 延迟注入（推荐）
+
+- 单一类型
+- 集合类型
+
+### ObjectProvider
+
+ObjectProvider 安全性高，可以减少避免一些异常
+
+- injection.LazyAnnotationDependencyInjectionDemo
+
+### 依赖处理过程
+
+基础知识
+
+- 入口 - DefaultListableBeanFactory#resolveDependency
+- 依赖描述符 - DependencyDescriptor
+- 自动绑定候选对象处理器 - AutowireCandidateResolver
+TODO
+
+## Java 通用注入原理
+
+CommonAnnotationBeanPostProcessor
+这个类和上面讲的的 AutowiredAnnotationBeanPostProcessor 都是处理依赖注入注解相关的类。
+AutowiredAnnotationBeanPostProcessor主要是处理 @Autowired 、Value、Inject 这三个注解，
+而本类主要是处理通用型的，主要包括下面三个注解和两个生命周期回调：
+
+- 注入注解
+  - javax.xml.ws.WebServiceRef
+  - javax.ejb.EJB
+  - javax.annotation.Resource
+- 生命周期注解
+  - javax.annotation.PostConstruct
+  - javax.annotation.PreDestroy
+
+### 区别1 生命周期
+CommonAnnotationBeanPostProcessor 中的方法多了
+
+postProcessMergedBeanDefinition() 多了生命周期（Lifecycle）的处理，主要指的是 PostConstruct（初始化） 和 PreDestroy（销毁） 这两个阶段。
+
+```java
+    @Override
+	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
+		LifecycleMetadata metadata = findLifecycleMetadata(beanType);
+		metadata.checkConfigMembers(beanDefinition);
+	}
+
+```
+
+### 区别2 顺序 Order
+
+- AutowiredAnnotationBeanPostProcessor Ordered.LOWEST_PRECEDENCE - 2
+- CommonAnnotationBeanPostProcessor Ordered.LOWEST_PRECEDENCE - 3
+
+由此可见，CommonAnnotationBeanPostProcessor 会优先执行。
+
+
+## 自定义依赖注入注解
+
+- AnnotationDependencyInjectionResolutionDemo
 
 # Spring IoC 注入
 
