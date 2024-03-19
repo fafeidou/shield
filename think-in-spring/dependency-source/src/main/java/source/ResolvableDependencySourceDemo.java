@@ -53,6 +53,8 @@ public class ResolvableDependencySourceDemo {
         // 启动 Spring 应用上下文
         applicationContext.refresh();
 
+        String bean = applicationContext.getBean(String.class);
+        System.out.println(bean);
         // 显示地关闭 Spring 应用上下文
         applicationContext.close();
     }

@@ -1223,6 +1223,222 @@ Bean 垃圾回收（GC）
 
 ![img.png](img/Spring 内建 BeanDefinition(2).png)
 
+
+### Spring 内建 BeanDefinition 注册过程
+
+相关源码位置：AnnotationConfigUtils#registerAnnotationConfigProcessors()
+
+#### 通过xml配置
+
+```xml
+
+<context:annotation-config/>
+
+```
+
+- org.geekbang.thinking.in.spring.ioc.overview.dependency.lookup.DependencyLookupDemo
+
+![img.png](img/xml_registerAnnotationConfigProcessors.png)
+
+#### 通过注解配置
+
+- source.ResolvableDependencySourceDemo
+
+![img.png](img/annotation_registerAnnotationConfigProcessors.png)
+
+### 单例对象注册
+
+相关源码位置：AbstractApplicationContext#prepareBeanFactory()
+
+注册一些内建的 Bean，如果引入更多的模块，比如 AOP、事务，也会有相应通过 registerSingleton 注册 Bean。
+
+```java
+protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+		// Register default environment beans.
+		if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
+			beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
+		}
+		if (!beanFactory.containsLocalBean(SYSTEM_PROPERTIES_BEAN_NAME)) {
+			beanFactory.registerSingleton(SYSTEM_PROPERTIES_BEAN_NAME, getEnvironment().getSystemProperties());
+		}
+		if (!beanFactory.containsLocalBean(SYSTEM_ENVIRONMENT_BEAN_NAME)) {
+			beanFactory.registerSingleton(SYSTEM_ENVIRONMENT_BEAN_NAME, getEnvironment().getSystemEnvironment());
+		}
+}
+
+```
+
+## 依赖注入的来源
+
+依赖注入 的来源比 依赖查找 多了 非 Spring 容器管理对象 这一块
+
+### 非 Spring 容器管理对象(ResolvableDependency)
+
+- 对象不存在 spring 容器中（即通过 getBean 的方法无法查找），但是可以依赖注入
+
+源码位置：AbstractApplicationContext#prepareBeanFactory
+
+```java
+
+protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+    // BeanFactory interface not registered as resolvable type in a plain factory.
+    // MessageSource registered (and found for autowiring) as a bean.
+    // 使用自动绑定的方式找到
+    beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
+    beanFactory.registerResolvableDependency(ResourceLoader.class, this);
+    beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
+    beanFactory.registerResolvableDependency(ApplicationContext.class, this);
+}
+
+```
+
+registerResolvableDependency() 这个方法的实现在 DefaultListableBeanFactory 中
+
+```java
+	@Override
+	public void registerResolvableDependency(Class<?> dependencyType, @Nullable Object autowiredValue) {
+		Assert.notNull(dependencyType, "Dependency type must not be null");
+		if (autowiredValue != null) {
+			if (!(autowiredValue instanceof ObjectFactory || dependencyType.isInstance(autowiredValue))) {
+				throw new IllegalArgumentException("Value [" + autowiredValue +
+						"] does not implement specified dependency type [" + dependencyType.getName() + "]");
+			}
+			this.resolvableDependencies.put(dependencyType, autowiredValue);
+		}
+	}
+
+```
+
+通过 this.resolvableDependencies.put(dependencyType, autowiredValue);
+
+可以看到将这个 4 个对象放到 resolvableDependencies 这个 ConcurrentHashMap 中。
+
+在启动Spring容器的时候，可以将断点打在 DefaultListableBeanFactory#findAutowireCandidates 这个方法里面，看到 resolvableDependencies 集合的元素，
+就是前面注册的 4 个对象，而且因为后面三个对象注册的都是 this，也就是当前的应用上下文 applicationContext，所以是同一个对象。
+
+- source.DependencySourceDemo
+
+![img.png](img/findAutowireCandidates.png)
+
+### 依赖来源示例
+
+- source.DependencySourceDemo
+
+
+```java
+
+beanFactory == applicationContext false
+beanFactory == applicationContext.getBeanFactory() true
+resourceLoader == applicationContext true
+ApplicationEventPublisher == applicationContext true
+当前类型org.springframework.beans.factory.BeanFactory 无法在 BeanFactory 中查找!
+当前类型org.springframework.context.ApplicationContext 无法在 BeanFactory 中查找!
+当前类型org.springframework.core.io.ResourceLoader 无法在 BeanFactory 中查找!
+当前类型org.springframework.context.ApplicationEventPublisher 无法在 BeanFactory 中查找!
+
+```
+
+
+由源码可知，BeanFactory 注册的对象是 beanFactory（通过 getBeanFactory() 方法获取），
+而其他三个对象注册的是 this（即当前的应用上下文 ApplicationContext）
+
+
+- beanFactory == applicationContext：false 不相等，而且在前面的文章中也分析过
+
+- 而其他三个对象，都是 this，所以其他这个对象本身其实都是 applicationContext，所以都相等
+
+- 这 4 个对象都是非 Spring 容器管理对象，通过 registerResolvableDependency 方法注册，所以通过 BeanFactory#getBean()
+  依赖查找无法获取，抛出 NoSuchBeanDefinitionException 异常。
+
+- 这个原因也比较好理解，DefaultListableBeanFactory 中分别用两个对象来进行存储
+  - beanDefinitionMap 用来存储一般注册 BeanDefinition，比如 xml，注解，API
+  - resolvableDependencies 用来存储 非 Spring 容器管理对象（或者叫游离对象）
+
+```java
+	/** Map from dependency type to corresponding autowired value. */
+	private final Map<Class<?>, Object> resolvableDependencies = new ConcurrentHashMap<>(16);
+
+	/** Map of bean definition objects, keyed by bean name. */
+	private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
+
+```
+
+可以猜测通过 beanFactory.getBean() 依赖查找是 beanDefinitionMap 集合，并未查找 resolvableDependencies 集合。那么我们来看下源码
+
+```java
+org.springframework.beans.factory.support.AbstractBeanFactory.getBean(java.lang.String)
+  
+public Object getBean(String name) throws BeansException {
+		return doGetBean(name, null, null, false);
+}
+```
+
+doGetBean() 这个方法的内容较多，我们只贴出部分相关的代码
+
+- 第一步 getSingleton(beanName)查找单例对象集合，如果有的话直接返回
+
+```java
+	protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredType,
+			@Nullable final Object[] args, boolean typeCheckOnly) throws BeansException {
+
+		final String beanName = transformedBeanName(name);
+		Object bean;
+
+		// Eagerly check singleton cache for manually registered singletons.
+		Object sharedInstance = getSingleton(beanName);
+
+```
+
+- 第二步是层次性的查找，BeanFactory parentBeanFactory = getParentBeanFactory(); 跳过
+- 第三步是合并 BeanDefinition，final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName); 跳过
+- AbstractBeanFactory 320 行，这里的单例指的是 Bean 的作用域，和前面的单例对象并不是一个概念，BeanDefinition 注册默认是 singleton。然后通过这个 mbd(合并后的 BeanDefinition ) 去 createBean，创建这个 bean。
+
+```java
+if (mbd.isSingleton()) {
+    sharedInstance = getSingleton(beanName, () -> {
+        try {
+            return createBean(beanName, mbd, args);
+        }
+        catch (BeansException ex) {
+            // Explicitly remove instance from singleton cache: It might have been put there
+            // eagerly by the creation process, to allow for circular reference resolution.
+            // Also remove any beans that received a temporary reference to the bean.
+            destroySingleton(beanName);
+            throw ex;
+        }
+    });
+    beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
+}
+```
+
+- 那么关键点就在 final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName); 这个合并的过程中。多次查找源码可以看到合并的过程会调用 getBeanDefinition 方法如下：
+
+```java
+org.springframework.beans.factory.support.DefaultListableBeanFactory.getBeanDefinition
+
+public BeanDefinition getBeanDefinition(String beanName) throws NoSuchBeanDefinitionException {
+  BeanDefinition bd = this.beanDefinitionMap.get(beanName);
+  if (bd == null) {
+    if (logger.isTraceEnabled()) {
+      logger.trace("No bean named '" + beanName + "' found in " + this);
+    }
+    throw new NoSuchBeanDefinitionException(beanName);
+  }
+  return bd;
+}
+
+```
+
+果然和我们猜想的一样通过 beanDefinitionMap get() 获取 BeanDefinition，
+而整个 getBean 依赖查找的过程中没有查找过 resolvableDependencies 集合。
+所以通过依赖查找无法获取 非 Spring 容器管理对象（Resolvable Dependency）
+
+
+
+
+
+
+
 # Spring Bean 作用域
 
 ## Spring Bean 作用域
