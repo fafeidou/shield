@@ -1433,9 +1433,128 @@ public BeanDefinition getBeanDefinition(String beanName) throws NoSuchBeanDefini
 而整个 getBean 依赖查找的过程中没有查找过 resolvableDependencies 集合。
 所以通过依赖查找无法获取 非 Spring 容器管理对象（Resolvable Dependency）
 
+## Spring 容器管理和游离对象
+
+![img.png](img/Spring%20容器管理和游离对象.png)
+
+## Spring BeanDefinition 作为依赖来源
+
+要素
+
+- 元数据：BeanDefinition
+- 注册：BeanDefinitionRegistry#registrerBeanDefinition
+- 类型：延迟和非延迟
+- 顺序：Bean 生命周期顺序按照注册顺序
+
+## 单例对象作为依赖来源
+- 要素
+  - 来源：外包普通 Java 对象（不一定是 POJO）
+  - 注册：SingletonBeanRegistry#registerSingleton
+
+- 限制
+  - 无生命周期管理
+  - 无法实现延迟初始化 Bean
+
+### 注册单例对象
+
+源码位置：DefaultSingletonBeanRegistry#registerSingleton
+
+就是简单的 put 操作，将对象存放到 singletonObjects 中。
+
+registerSingleton 的第一把锁，主要是这个方法既调用了 get() 方法，又调用了 add() 方法，为了线程安全。
+
+addSingleton 中加锁的原因是 addSingleton() 方法可能被别的地方调用，而且此方法也是一个多元的操作，为了线程安全。
+
+this.singletonObjects.put(beanName, singletonObject);
+加入 singletonObjects 集合
+this.singletonFactories.remove(beanName);
+ObjectFactory 操作的 Bean,用来进行延迟查找，如果这个 Bean 注册成单例对象，和这个是一个互斥的操作，所以需要删除
+this.earlySingletonObjects.remove(beanName);
+这个早期的 SingletonObject 也是一个互斥的操作，所以需要删除
+this.registeredSingletons.add(beanName);
+这个也是为了保存一个顺序
+
+```java
+
+	@Override
+	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
+		Assert.notNull(beanName, "Bean name must not be null");
+		Assert.notNull(singletonObject, "Singleton object must not be null");
+		synchronized (this.singletonObjects) {
+			Object oldObject = this.singletonObjects.get(beanName);
+			if (oldObject != null) {
+				throw new IllegalStateException("Could not register object [" + singletonObject +
+						"] under bean name '" + beanName + "': there is already object [" + oldObject + "] bound");
+			}
+			addSingleton(beanName, singletonObject);
+		}
+	}
+
+	protected void addSingleton(String beanName, Object singletonObject) {
+		synchronized (this.singletonObjects) {
+			this.singletonObjects.put(beanName, singletonObject);
+			this.singletonFactories.remove(beanName);
+			this.earlySingletonObjects.remove(beanName);
+			this.registeredSingletons.add(beanName);
+		}
+	}
+
+```
+
+### 单例对象依赖查找
+
+依赖查找 还是通过 getBean 方法
+
+源码位置：AbstractBeanFactory#getBean(java.lang.String, java.lang.Object…)
+
+先查询的是 getSingleton() 而不是先查 BeanDefinition，如果找到 bean 直接返回，而 BeanDefinition 的方式会比较复杂，
+需要将 BeanDefinition 通过 doGetBean() 变成 Bean，并激活整个 Bean 的生命周期。
 
 
+## 非 Spring 容器管理对象作为依赖来源
 
+- 要素
+  - 注册：ConfigurableListableBeanFactory#registerResolvableDependency
+  - 只有类型注入一种
+  - 只能实现依赖注入
+
+- 限制
+  - 无生命周期管理
+  - 无法实现延迟初始化 Bean
+  - 无法通过依赖查找
+
+- source.ResolvableDependencySourceDemo
+
+## 外部化配置作为依赖来源
+
+- 要素
+  - 类型：非常规 Spring 对象依赖来源
+
+- 限制
+  - 无生命周期管理
+  - 无法实现延迟初始化 Bean
+  - 无法通过依赖查找
+
+### 示例
+
+- source.ExternalConfigurationDependencySourceDemo
+
+## 面试
+9.1 注入和查找的依赖来源是否相同？
+不完全一样，依赖查找的来源仅限于 Spring BeanDefinition 以及单例对象，而依赖注入的来源还包括 Resolvable Dependency（非 Spring 容器管理对象或者称游离对象） 以及 @Value 所标注的外部化配置
+
+9.2 单例对象能在 IOC 容器启动后注册吗？
+可以，单例对象的注册与 BeanDefinition 不同，BeanDefinition 会被 ConfigurableListableBeanFactory#freezeConfiguration() 方法影响从而冻结注册，单例对象没有这个限制。
+
+9.3 Spring 依赖注入有哪些来源？
+Spring BeanDefinition
+单体对象
+Resolvable Dependency 游离对象 4个
+BeanFactory
+ApplicationContext
+ResourceLoader
+ApplicationEventPublisher
+外部化配置@Value
 
 
 
