@@ -1773,6 +1773,23 @@ org.springframework.cloud.context.scope.GenericScope.destroy(java.lang.String)
 org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean
 
 refresh 的时候缓存不存在了，getBean()从容器中获取一个新的bean
+## 面试题
+
+### Spring 内建的 Bean 作用域有几种？
+设计模式 singleton、prototype
+
+web场景 request、session、application 以及 websocket（spring 后期加入）
+
+### singleton Bean 是否在一个应用是唯一的？
+否，singleton bean 仅在当前的 spring ioc 容器（BeanFactory）中是单例对象，如果有多个应用上下文，比如层次性上下文。
+
+如果一个静态字段在 JVM 中是不是唯一的？
+
+一个静态字段对应的 ClassLoader是唯一的，但是一个应用可以有多个 ClassLoader。ClassLoader 之间是互相隔离的。
+
+### “application” Bean 是否被其他方案代替？
+可以，实际上，“application” Bean 与 “singleton” Bean 没有本质的区别，因为如果想在一个应用上下文中需要使用一个共享的唯一的 bean，
+直接使用 "singleton " Bean 就可以了。
 
 
 # Spring Bean 生命周期
