@@ -17,6 +17,7 @@
         <module>dependency-injection</module>
         <module>dependency-source</module>
         <module>bean-lifecycle</module>
+        <module>bean-scope</module>
     </modules>
     <properties>
         <spring.version>5.2.2.RELEASE</spring.version>

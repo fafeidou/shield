@@ -1568,7 +1568,6 @@ ApplicationEventPublisher
 
 request、session、application 主要用于页面渲染，比如 JSP、Velocity、Freemaker 等模板引擎，在现在的 web 开发中已经慢慢的转向前后端分离，模板引擎技术已经慢慢的边缘化了。
 
-
 ## singleton Bean作用域
 
 从设计模式的角度，单例模式不论是“懒汉式”还是“饿汉式”，其实最主要的作用是保证对象是唯一的。
@@ -1613,6 +1612,167 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 通过这个两个方法可以判断一个 BeanDefinition 是否是单例或者原型，但是并没有 request、session、application 相关的方法，侧面说明这三种不需要过多关注。
 
 singleton 和 prototype 不能简单的说是互斥的关系，因为从接口的角度看，两个方法可以同时存在。
+
+## prototype Bean作用域
+
+每次进行属性注入都会产生一个新的实例
+
+### 依赖查找&依赖示例
+
+- 分别定义两个 Bean，一个 singleton，一个 prototype。
+- getBean() 依赖查找，循环三次看每次取到的对象是否相同
+- 使用 System.nanoTime() 系统时间来定义 user 的 id，以便区别 bean 的实例
+
+```java
+scope.BeanScopeDemo
+```
+
+由此可以得出结论
+
+
+- 结论一：
+  - Singleton Bean 无论依赖查找还是依赖注入，均为同一个对象
+  - Prototype Bean 无论依赖查找还是依赖注入，均为新生成的对象
+
+- 结论二：
+  - 如果依赖注入集合类型的对象，Singleton Bean 和 Prototype Bean 均会存在一个
+  - Prototype Bean 有别于其他地方的依赖注入 Prototype Bean
+
+- 结论三：
+  - 无论是 Singleton 还是 Prototype Bean 均会执行初始化方法回调
+  - 不过仅 Singleton Bean 会执行销毁方法回调
+
+## request Bean作用域
+
+
+- 配置
+  - XML - <bean class="…" scope=“request” …/>
+  - Java 注解 -@RequestScope 或者 Scope(WebApplicationContext.SCOPE_REQUEST)
+
+- 实现
+  - API - RequestScope
+
+源码位置：org.springframework.web.context.request.RequestScope
+
+
+### 示例
+
+- scope.web.WebConfiguration
+
+- scope.web.controller.IndexController
+
+```java
+
+mvn package
+
+java -jar -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8888 bean-scope-0.0.1-war-exec.jar
+
+```
+当前端页面渲染时，我们说的对象是新生成的对象（JSP页面中的引用对象），每个请求都会生产新的对象。
+
+但是创建代理对象或者创建新生对象，它实际上是一个被 CGLIB 提升后的一个代理对象，这个代理对象本身它始终是一个不变的，而在前端渲染的对象每次都是变化的。
+
+![img.png](img/RequestScopeUser.png)
+
+可以看到这里每次请求生成的id都不一样
+
+## session Bean作用域
+
+
+- 配置
+
+  - XML - <bean class="…" scope=“session” …/>
+  - Java 注解 -@SessionScope 或者 Scope(WebApplicationContext.SCOPE_SESSION)
+  
+- 实现
+
+  - API - SessionScope
+  - 源码位置：org.springframework.web.context.request.SessionScope
+
+源码中的 get() 方法操作
+
+```java
+
+	@Override
+	public Object get(String name, ObjectFactory<?> objectFactory) {
+		Object mutex = RequestContextHolder.currentRequestAttributes().getSessionMutex();
+		synchronized (mutex) {
+			return super.get(name, objectFactory);
+		}
+	}
+    
+```
+
+使用互斥锁，为了防止以下场景
+
+一个用户同一个浏览器，打开多个 tab 窗口，打开的页面中使用 Ajax 循环发送请求，由于不同的 tab 之前，cookie 是共用的，这时候无法保证操作的顺序性；前后直接就会产生数据不一致的情况。
+
+使用 cookie 记录 jsessionid 用来进行用户跟踪，因为涉及到同步，性能会有一定的损耗
+
+和 Request 实现的区别
+
+- 每个 Request 对应一个线程，线程和线程之间它的作用域，所以间接的就隔开了。
+- 前端渲染的对象每次都是同一个对象
+
+切换不同的浏览器会展示不用的
+
+## application Bean作用域
+
+- 配置
+  - XML - <bean class="…" scope=“application” …/>
+  - Java 注解 -@ApplicationScope 或者 Scope(WebApplicationContext.SCOPE_APPLICATION)
+
+- 实现
+  - API - ServletContextScope
+  - scopedTarget
+
+## 自定义 Bean 作用域
+
+- 实现 Scope
+  - org.springframework.beans.factory.config.Scope
+  
+- 注册 Scope
+  - API - org.springframework.beans.factory.config.ConfigurableBeanFactory#registerScope
+
+- 实现一个 ThreadLocal 级别的 Scope
+  - scope.ThreadLocalScope
+  - scope.ThreadLocalScopeDemo
+
+- ThreadLocal解决SimpleDateFormat线程安全问题 https://blog.csdn.net/jike11231/article/details/108528406
+
+
+## 自定义作用域的应用
+
+Spring Cloud 中的 RefreshScope
+
+```java
+
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@Scope("refresh")
+@Documented
+public @interface RefreshScope {
+	/**
+	 * @see Scope#proxyMode()
+	 */
+	ScopedProxyMode proxyMode() default ScopedProxyMode.TARGET_CLASS;
+
+}
+
+```
+
+源码位置：org.springframework.cloud.context.scope.refresh.RefreshScope
+
+每次通过endpoint调用，都用调用refresh()
+org.springframework.cloud.context.scope.refresh.RefreshScope.refresh
+
+接着调用destroy，将缓存中的bean清理掉
+org.springframework.cloud.context.scope.GenericScope.destroy(java.lang.String)
+
+每次在doGetBean()，会掉用 org.springframework.beans.factory.config.Scope.get 方法
+org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean
+
+refresh 的时候缓存不存在了，getBean()从容器中获取一个新的bean
 
 
 # Spring Bean 生命周期
