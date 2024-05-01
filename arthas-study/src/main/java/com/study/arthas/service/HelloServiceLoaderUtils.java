@@ -15,6 +15,7 @@ public class HelloServiceLoaderUtils implements ApplicationContextAware {
     public String invoke(String className) {
         try {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            //ClassLoader classLoader = ClassLoader.getSystemClassLoader();
             System.out.println("classLoader is : " + classLoader);
             Class clz = classLoader.loadClass(className);
             Object bean = applicationContext.getBean(clz);
