@@ -5,6 +5,8 @@ pipeline {
             harborRepo = 'repository'
             harborUser = 'admin'
             harborPasswd = 'Harbor12345'
+            port = 8080
+            host_port = 8888
     }
     stages {
 
@@ -21,15 +23,21 @@ pipeline {
         }
 
         stage('制作自定义镜像并发布Harbor') {
-                    steps {
-                        sh '''cd arthas-study/docker
-                              mv ../target/arthas-study.jar ./arthas-study.jar
-                        docker build -t ${JOB_NAME}:${tag} ./'''
+            steps {
+                sh '''cd arthas-study/docker
+                      mv ../target/arthas-study.jar ./arthas-study.jar
+                docker build -t ${JOB_NAME}:${tag} ./'''
 
-                        sh '''docker login -u ${harborUser} -p ${harborPasswd} ${harborHost}
-                        docker tag ${JOB_NAME}:${tag} ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}
-                        docker push ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}'''
-                    }
+                sh '''docker login -u ${harborUser} -p ${harborPasswd} ${harborHost}
+                docker tag ${JOB_NAME}:${tag} ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}
+                docker push ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}'''
+            }
+        }
+
+        stage('目标服务器拉取镜像并运行') {
+            steps {
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'testEnv', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: "/usr/bin/deploy.sh $harborHost $harborRepo $JOB_NAME $tag $port $host_port", execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+            }
         }
     }
 }
