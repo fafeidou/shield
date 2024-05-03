@@ -1,5 +1,11 @@
 pipeline {
     agent any
+    environment{
+            harborHost = '192.168.56.112:80'
+            harborRepo = 'repository'
+            harborUser = 'admin'
+            harborPasswd = 'Harbor12345'
+    }
     stages {
 
         stage('拉取Git代码') {
@@ -12,6 +18,18 @@ pipeline {
             steps {
                 sh 'cd arthas-study && /var/jenkins_home/maven/bin/mvn clean package -DskipTests'
             }
+        }
+
+        stage('制作自定义镜像并发布Harbor') {
+                    steps {
+                        sh '''cd docker
+                              mv ../target/arthas-study.jar ./arthas-study.jar
+                        docker build -t ${JOB_NAME}:${tag} ./'''
+
+                        sh '''docker login -u ${harborUser} -p ${harborPasswd} ${harborHost}
+                        docker tag ${JOB_NAME}:${tag} ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}
+                        docker push ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}'''
+                    }
         }
     }
 }
