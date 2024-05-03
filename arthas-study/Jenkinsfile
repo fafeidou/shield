@@ -22,7 +22,7 @@ pipeline {
 
         stage('制作自定义镜像并发布Harbor') {
                     steps {
-                        sh '''cd docker
+                        sh '''cd arthas-study/docker
                               mv ../target/arthas-study.jar ./arthas-study.jar
                         docker build -t ${JOB_NAME}:${tag} ./'''
 
