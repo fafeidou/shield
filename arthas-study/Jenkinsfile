@@ -7,5 +7,11 @@ pipeline {
                 checkout scmGit(branches: [[name: '${tag}']], extensions: [], userRemoteConfigs: [[credentialsId: 'gitee', url: 'https://gitee.com/qfxcoffee/shield.git']])
             }
         }
+
+        stage('构建代码') {
+            steps {
+                sh 'cd arthas-study && /var/jenkins_home/maven/bin/mvn clean package -DskipTests'
+            }
+        }
     }
 }
