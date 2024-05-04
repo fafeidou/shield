@@ -46,7 +46,9 @@ pipeline {
         }
         stage('远程执行k8s-master的kubectl命令'){
             steps {
-                sh  'ssh root@192.168.56.111 kubectl apply -f /test/arthas-study/pipeline.yml'
+//                 sh  'ssh root@192.168.56.111 kubectl apply -f /test/arthas-study/pipeline.yml'
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'k8s', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: "kubectl apply -f /test/arthas-study/pipeline.yml", execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+
             }
         }
     }
