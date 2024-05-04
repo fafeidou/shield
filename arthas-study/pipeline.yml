@@ -21,6 +21,8 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+      imagePullSecrets:
+        - name: myharbor
 ---
 apiVersion: v1
 kind: Service
@@ -36,22 +38,3 @@ spec:
     - port: 8081
       targetPort: 8080
   type: NodePort
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  namespace: test
-  name: pipeline
-spec:
-  ingressClassName: ingress
-  rules:
-    - host: batman.pipeline.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: pipeline
-                port:
-                  number: 8081
