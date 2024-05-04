@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: pipeline
-          image: 192.168.56.112:80/repository/pipeline-test:1.0.0
+          image: 192.168.56.112:80/repository/pipeline-test:1.0.5
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
