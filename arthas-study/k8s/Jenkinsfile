@@ -1,0 +1,63 @@
+def git_address = "https://gitee.com/qfxcoffee/shield.git"
+def git_auth = "gitee"
+
+//创建一个Pod的模板，label为jenkins-slave
+podTemplate(label: 'jenkins-slave1', cloud: 'my-kube', containers: [
+    containerTemplate(
+        name: 'jnlp',
+        image: "jenkins-slave-maven:latest",
+        runAsUser: '0',  //非root用户ID
+        runAsGroup: '0'  //非root组ID
+    ),
+     containerTemplate(
+             name: 'docker',
+             image: "docker:stable",
+             ttyEnabled: true,
+             command: 'cat'
+     ),
+  ],
+     volumes: [
+       hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
+       hostPathVolume(mountPath: '/usr/bin/docker', hostPath: '/usr/bin/docker'),
+       nfsVolume(mountPath: '/usr/local/apache-maven/repo', serverAddress: '192.168.56.111' , serverPath: '/opt/nfs/maven'),
+     ],
+)
+{
+  //引用jenkins-slave的pod模块来构建Jenkins-Slave的pod
+  node("jenkins-slave1"){
+    //   第一步
+      stage('拉取代码'){
+         checkout([$class: 'GitSCM', branches: [[name: 'master']], userRemoteConfigs: [[credentialsId: "${git_auth}", url: "${git_address}"]]])
+      }
+
+      // 第二步
+      stage('代码编译'){
+          //编译并安装
+          sh "pwd && ls && mvn install -pl ./arthas-study -am -f pom.xml"
+      }
+
+      stage('制作自定义镜像并发布Harbor') {
+              sh '''cd arthas-study/docker
+                        mv ../target/arthas-study.jar ./arthas-study.jar
+                 docker build -t ${JOB_NAME}:1.1.2 . '''
+                // sh "id && cd /usr/bin && ls -l"
+                // sh 'docker version'
+                  //sh '''docker login -u ${harborUser} -p ${harborPasswd} ${harborHost}
+                  //docker tag ${JOB_NAME}:${tag} ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}
+                  //docker push ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}'''
+      }
+
+      stage('Sleep') {
+                script {
+                    sh '''
+                    # 执行一些命令
+                    echo "Starting…"
+                    # 暂停100秒
+                    sleep 1000
+                    # 执行另一些命令
+                    echo "Finished sleeping."
+                    '''
+                }
+        }
+  }
+}
