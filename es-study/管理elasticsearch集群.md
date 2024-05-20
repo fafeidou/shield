@@ -129,7 +129,7 @@ bin/elasticsearch -E node.name=node2 -E cluster.name=geektime -E path.data=node2
   - 增加 refresh interval的数值。默认为ls,如果设置成-1,会禁止自动refresh
     - 避免过于频繁的refresh,而生成过多的 segment文件
     - 但是会降低搜索的实时性
-  - 增大静态配置参数indices.memory.index buffer size
+  - 增大静态配置参数indices.memory.index_buffer_size
     - 默认是10%,会导致自动触发refresh
 
 ## Trans log
