@@ -16,11 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class KafkaProducer {
 
     // 自定义的主题名称
-    public static final String TOPIC_NAME="topic0";
+    public static final String TOPIC_NAME="topic2";
 
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
+    /**
+     * http://localhost:8080/kafka/send?msg=a
+     * @param msg
+     */
     @RequestMapping("/send")
     public String send(@RequestParam("msg")String msg) {
         log.info("准备发送消息为：{}",msg);

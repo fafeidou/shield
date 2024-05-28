@@ -7,7 +7,45 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       fetch-max-wait: 25000ms
       fetch-min-size: 10
-
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    multiple:
+      consumer:
+        factories:
+          test-factory:
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            bootstrap-servers: 192.168.56.112:9092
+            group-id: group_a
+            concurrency: 25
+            fetch-min-size: 1048576
+            fetch-max-wait: 3000
+            listener:
+              type: batch
+            properties:
+              spring-json-trusted-packages: '*'
+        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        auto-offset-reset: latest
+      producer:
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      primary: ds1
+      datasource:
+        ds1:
+          bootstrap-servers: 192.168.56.112:9092
+          consumer:
+            # Consumer concurrent kafka listener container factory is not allowed to be empty.
+            container-factory: ds1KafkaListenerContainerFactory
+            auto-offset-reset: earliest
+          producer:
+            kafka-template: ds1KafkaTemplate
+        ds2:
+          bootstrap-servers: 192.168.56.112:9092
+          consumer:
+            container-factory: ds2KafkaListenerContainerFactory
+            auto-offset-reset: earliest
+          producer:
+            # Producer kafka template bean name is not allowed to be empty.
+            kafka-template: ds2KafkaTemplate
