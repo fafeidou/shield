@@ -1,12 +1,17 @@
 package com.example.kafka.autoconfig;
 
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
+import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
+import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -23,6 +28,9 @@ public class CustomKafkaDataSourceRegister implements InitializingBean {
     @Resource
     private kafkaConsumerConfig kafkaConsumerConfig;
 
+    @Resource
+    private kafkaProducerConfig kafkaProducerConfig;
+
     @Override
     public void afterPropertiesSet() {
         Map<String, ConsumerConfigWrapper> factories = kafkaConsumerConfig.getFactories();
@@ -38,6 +46,37 @@ public class CustomKafkaDataSourceRegister implements InitializingBean {
                 }
             });
         }
+        Map<String, KafkaProperties.Producer> templates = kafkaProducerConfig.getTemplates();
+        if (!ObjectUtils.isEmpty(templates)) {
+            templates.forEach((templateName, producerConfig) -> {
+                //Map<String, Object> producerProperties = producerConfig.buildProperties();
+                //MutablePropertyValues propertyValues = new MutablePropertyValues();
+                //for (Map.Entry<String, Object> entry : producerProperties.entrySet()) {
+                //    propertyValues.addPropertyValue(entry.getKey(), entry.getValue());
+                //}
+                //registerBean(beanFactory, templateName, KafkaTemplate.class, propertyValues);
+                //注册spring bean的两种方式
+                registerBeanWithConstructor(beanFactory, templateName, KafkaTemplate.class, producerFactoryValues(producerConfig.buildProperties()));
+                //beanFactory.registerSingleton(templateName, kafkaTemplate(producerConfig.buildProperties()));
+            });
+        }
+    }
+
+    private KafkaTemplate<String, Object> kafkaTemplate(Map<String, Object> props) {
+        return new KafkaTemplate<>(producerFactory(props));
+    }
+
+    private ProducerFactory<String, Object> producerFactory(Map<String, Object> props) {
+        return new DefaultKafkaProducerFactory<>(producerConfig(props));
+    }
+
+    private Map<String, Object> producerConfig(Map<String, Object> props) {
+        if (ObjectUtils.isEmpty(props)) {
+            return null;
+        }
+        props.putIfAbsent(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.putIfAbsent(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        return props;
     }
 
     /**
@@ -83,5 +122,26 @@ public class CustomKafkaDataSourceRegister implements InitializingBean {
                 containerFactory.setBatchListener(true);
             }
         }
+    }
+
+    private void registerBean(DefaultListableBeanFactory beanFactory, String beanName, Class<?> beanClass,
+                              MutablePropertyValues propertyValues) {
+        AnnotatedBeanDefinition annotatedBeanDefinition = new AnnotatedGenericBeanDefinition(beanClass);
+        ((AnnotatedGenericBeanDefinition) annotatedBeanDefinition).setPropertyValues(propertyValues);
+        beanFactory.registerBeanDefinition(beanName, annotatedBeanDefinition);
+    }
+
+
+    private void registerBeanWithConstructor(DefaultListableBeanFactory beanFactory, String beanName, Class<?> beanClass,
+                                             ConstructorArgumentValues propertyValues) {
+        AnnotatedBeanDefinition annotatedBeanDefinition = new AnnotatedGenericBeanDefinition(beanClass);
+        ((AnnotatedGenericBeanDefinition) annotatedBeanDefinition).setConstructorArgumentValues(propertyValues);
+        beanFactory.registerBeanDefinition(beanName, annotatedBeanDefinition);
+    }
+
+    private ConstructorArgumentValues producerFactoryValues(Map<String, Object> producerConfig) {
+        ConstructorArgumentValues mutablePropertyValues = new ConstructorArgumentValues();
+        mutablePropertyValues.addIndexedArgumentValue(0, producerFactory(producerConfig));
+        return mutablePropertyValues;
     }
 }

@@ -29,6 +29,11 @@ spring:
         value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
         auto-offset-reset: latest
       producer:
+        templates:
+          test-template:
+            bootstrap-servers: 192.168.56.112:9092
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
         key-serializer: org.apache.kafka.common.serialization.StringSerializer
         value-serializer: org.apache.kafka.common.serialization.StringSerializer
       primary: ds1
