@@ -25,6 +25,7 @@
         <java.version>8</java.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
+        <elasticsearch.version>7.17.3</elasticsearch.version>
     </properties>
 
     <modules>
@@ -35,6 +36,7 @@
         <module>netty-study</module>
         <module>think-in-spring</module>
         <module>kafka-study</module>
+        <module>es-study</module>
     </modules>
 
     <dependencies>
