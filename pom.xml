@@ -37,6 +37,7 @@
         <module>think-in-spring</module>
         <module>kafka-study</module>
         <module>es-study</module>
+        <module>redis-study</module>
     </modules>
 
     <dependencies>
