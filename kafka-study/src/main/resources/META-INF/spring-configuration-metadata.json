@@ -1,0 +1,27 @@
+{
+  "groups": [
+    {
+      "name": "spring.kafka.multiple.consumer",
+      "type": "com.example.kafka.autoconfig.kafkaConsumerConfig",
+      "sourceType": "com.example.kafka.autoconfig.kafkaConsumerConfig"
+    },
+    {
+      "name": "spring.kafka.multiple.producer",
+      "type": "com.example.kafka.autoconfig.kafkaProducerConfig",
+      "sourceType": "com.example.kafka.autoconfig.kafkaProducerConfig"
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.kafka.multiple.consumer.factories",
+      "type": "java.util.Map<java.lang.String,com.example.kafka.autoconfig.ConsumerConfigWrapper>",
+      "sourceType": "com.example.kafka.autoconfig.kafkaConsumerConfig"
+    },
+    {
+      "name": "spring.kafka.multiple.producer.templates",
+      "type": "java.util.Map<java.lang.String,org.springframework.boot.autoconfigure.kafka.KafkaProperties$Producer>",
+      "sourceType": "com.example.kafka.autoconfig.kafkaProducerConfig"
+    }
+  ],
+  "hints": []
+}
