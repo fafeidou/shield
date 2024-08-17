@@ -38,6 +38,7 @@
         <module>kafka-study</module>
         <module>es-study</module>
         <module>redis-study</module>
+        <module>jvm-study</module>
     </modules>
 
     <dependencies>
