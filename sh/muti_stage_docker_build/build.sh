@@ -7,13 +7,10 @@ docker create --name builder builder_app:v1
 
 docker cp builder:/go/src/myapp ./
 
-echo Building go/helloworld:2
+echo Building server_app:v1
 
 docker build  --no-cache -t server_app:v1 . -f Dockerfile.copy
 
 
-docker build --no-cache  -t server_app:v2 . -f Dockerfile.build
-
-
-
+#docker build --no-cache  -t server_app:v2 . -f Dockerfile.build
 
