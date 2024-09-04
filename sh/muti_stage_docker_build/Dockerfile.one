@@ -1,14 +1,5 @@
-FROM golang:alpine
-
-RUN apk --no-cache add git ca-certificates
-
-WORKDIR /go/src/github.com/go/helloworld/
-
-COPY app.go .
-
-RUN go build -o app . \
-  && cp /go/src/github.com/go/helloworld/app /root
-
-WORKDIR /root/
-
-CMD ["./app"]
+FROM golang:1.16
+WORKDIR /go/src
+COPY app.go ./
+#go编译
+RUN go build  -o myapp app.go

@@ -1,13 +1,17 @@
 #!/bin/sh
-echo Building go/helloworld:build
+echo builder_app:v1
 
-docker build -t go/helloworld:build . -f Dockerfile.build
+docker build -t builder_app:v1 . -f Dockerfile.one
 
-docker create --name extract go/helloworld:build
-docker cp extract:/go/src/github.com/go/helloworld/app ./app
-docker rm -f extract
+docker create --name builder builder_app:v1
+
+docker cp builder:/go/src/myapp ./
 
 echo Building go/helloworld:2
 
-docker build --no-cache -t go/helloworld:2 . -f Dockerfile.copy
-rm ./app
+docker build  --no-cache -t server_app:v1 . -f Dockerfile.copy
+
+
+
+
+
