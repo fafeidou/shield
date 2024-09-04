@@ -12,6 +12,8 @@ echo Building go/helloworld:2
 docker build  --no-cache -t server_app:v1 . -f Dockerfile.copy
 
 
+docker build --no-cache  -t server_app:v2 . -f Dockerfile.build
+
 
 
 

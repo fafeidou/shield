@@ -1,9 +1,10 @@
-FROM golang:alpine
-
-RUN apk --no-cache add git
-
-WORKDIR /go/src/github.com/go/helloworld
-
-COPY app.go .
-
-RUN  go build -o app .
+#阶段1
+FROM golang:1.16
+WORKDIR /go/src
+COPY app.go ./
+RUN go build app.go -o myapp
+#阶段2
+FROM scratch
+WORKDIR /server
+COPY --from=0 /go/src/myapp ./
+CMD ["./myapp"]
