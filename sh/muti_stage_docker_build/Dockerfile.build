@@ -2,7 +2,7 @@
 FROM golang:1.16
 WORKDIR /go/src
 COPY app.go ./
-RUN go build app.go -o myapp
+RUN go build  -o myapp app.go
 #阶段2
 FROM scratch
 WORKDIR /server
