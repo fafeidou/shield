@@ -6,7 +6,7 @@ WORKDIR /go/src/github.com/go/helloworld/
 
 COPY app.go .
 
-RUN go build -a -installsuffix cgo -o app . \
+RUN go build -o app . \
   && cp /go/src/github.com/go/helloworld/app /root
 
 WORKDIR /root/
