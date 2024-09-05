@@ -1,5 +1,5 @@
 #阶段1
-FROM golang:1.16
+FROM golang:1.16 as builder
 WORKDIR /go/src
 # 复制源码并编译
 COPY app.go ./
@@ -8,6 +8,6 @@ RUN go build  -o myapp app.go
 FROM scratch
 WORKDIR /server
 # 从构建阶段复制编译好的可执行文件
-COPY --from=0 /go/src/myapp ./
+COPY --from=builder /go/src/myapp ./
 # 指定启动命令
 CMD ["./myapp"]
