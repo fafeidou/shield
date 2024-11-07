@@ -1,1 +1,1 @@
-docker build -t test:v1 . -f Dockerfile.one
+docker build -t test:v1 . -f Dockerfile
