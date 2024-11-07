@@ -7,6 +7,8 @@ COPY ./app/start-dev.sh start-dev.sh
 # 默认情况下选择开发环境的启动脚本
 ENV ENTRYPOINT_PATH=/app/start-dev.sh
 
+RUN echo $PWD
+
 # 设置脚本的执行权限
 RUN chmod +x ./app/start-prod.sh ./app/start-dev.sh
 
