@@ -8,7 +8,7 @@ COPY ./app/start-dev.sh start-dev.sh
 ENV ENTRYPOINT_PATH=/app/start-dev.sh
 
 # 设置脚本的执行权限
-RUN chmod +x /app/start-prod.sh /app/start-dev.sh
+RUN chmod +x ./app/start-prod.sh ./app/start-dev.sh
 
 # 设置 ENTRYPOINT
 ENTRYPOINT ["/bin/sh", "-c", "$ENTRYPOINT_PATH"]
