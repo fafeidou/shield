@@ -2,7 +2,7 @@ FROM ubuntu:20.04
 
 ENV WORKDIR_PATH=/home/test
 
-RUN apt update && apt install python3 python3-pip -y
+RUN apt-get update && apt install python3 python3-pip -y
 
 RUN python3 --version && \
     pip3 --version && \
