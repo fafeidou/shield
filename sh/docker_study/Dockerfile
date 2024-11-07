@@ -6,8 +6,8 @@ ENV ENTRYPOINT_PATH=start-dev.sh
 WORKDIR /home/test
 
 # 复制不同的启动脚本
-COPY ./app/start-prod.sh $WORKDIR/start-prod.sh
-COPY ./app/start-dev.sh $WORKDIR/start-dev.sh
+COPY ./app/start-prod.sh /home/test/start-prod.sh
+COPY ./app/start-dev.sh /home/test/start-dev.sh
 
 RUN ls /home/test
 
