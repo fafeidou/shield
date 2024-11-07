@@ -2,6 +2,14 @@ FROM ubuntu:20.04
 
 ENV WORKDIR_PATH=/home/test
 
+RUN apt update && apt install python3 python3-pip -y
+
+RUN python3 --version && \
+    pip3 --version && \
+    pip3 install rich && \
+    python3 -m rich --version
+
+
 # 默认情况下选择开发环境的启动脚本
 ENV ENTRYPOINT_PATH=$WORKDIR_PATH/start-dev.sh
 
