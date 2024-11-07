@@ -1,3 +1,3 @@
 #!/bin/bash
 
-echo "start dev sh"
+rich "[green][INFO] start dev sh [/]" -p --force-terminal
