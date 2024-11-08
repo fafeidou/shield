@@ -10,21 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # 更新APT源为阿里云镜像源并安装常用工具
 RUN echo "deb http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" > /etc/apt/sources.list \
-    && echo "deb-src http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list \
-    && apt-get update \
-    && apt-get install gpgv=2.2.19-3ubuntu2.1~ \
-    && apt-get install -y --no-install-recommends \
-       curl \
-       gnupg \
-       lsb-release \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# 安装其他依赖包
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    vim \
-    git
+    && echo "deb-src http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list
 
 RUN apt-get update && apt install python3 python3-pip -y
 
