@@ -4,11 +4,26 @@ ENV WORKDIR_PATH=/home/test
 
 # 设置时区为Asia/Shanghai
 ENV TZ Asia/Shanghai
-RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
-      echo "deb http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list && \
-      echo "deb http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list && \
-      echo "deb http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
-      echo "deb http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list
+
+# 设置环境变量，避免交互式提示
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 更新APT源为阿里云镜像源并安装常用工具
+RUN echo "deb http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" > /etc/apt/sources.list \
+    && echo "deb-src http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+       curl \
+       gnupg \
+       lsb-release \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装其他依赖包
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    vim \
+    git
 
 RUN apt-get update && apt install python3 python3-pip -y
 
