@@ -12,6 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN echo "deb http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" > /etc/apt/sources.list \
     && echo "deb-src http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list \
     && apt-get update \
+    && apt-get install gpgv=2.2.19-3ubuntu2.1~ \
     && apt-get install -y --no-install-recommends \
        curl \
        gnupg \
