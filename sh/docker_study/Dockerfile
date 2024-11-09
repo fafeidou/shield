@@ -22,4 +22,4 @@ COPY ./app/start-dev.sh $WORKDIR_PATH/start-dev.sh
 RUN chmod +x $WORKDIR_PATH/start-prod.sh $WORKDIR_PATH/start-dev.sh
 
 # 确保 $ENTRYPOINT_PATH 解析是通过 shell 启动
-ENTRYPOINT ["/bin/sh", "-c", "exec $ENTRYPOINT_PATH"]
+ENTRYPOINT ["/bin/sh", "-c", "exec /home/test/start-prod.sh"]
