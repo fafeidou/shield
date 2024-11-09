@@ -25,4 +25,4 @@ spec:
             value: "{{inputs.parameters.message}}"
           - name: ENTRYPOINT_PATH
             value: "{{inputs.parameters.message}}"
-        command: [ "sh", "-c", "echo $MESSAGE" ]
+        command: [ "sh", "-c", "echo Executing script at $ENTRYPOINT_PATH && sh $ENTRYPOINT_PATH" ]
