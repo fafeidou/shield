@@ -22,7 +22,7 @@ spec:
         image: test:v1
         env:
           - name: MESSAGE
-            value: "{{inputs.parameters.message}}"
+            value: "123"
           - name: ENTRYPOINT_PATH
             value: "{{inputs.parameters.message}}"
         command: [ "sh", "-c", "echo Executing script at $ENTRYPOINT_PATH && sh $ENTRYPOINT_PATH" ]
