@@ -25,4 +25,5 @@ RUN ls /home/test
 RUN chmod +x $WORKDIR_PATH/start-prod.sh $WORKDIR_PATH/start-dev.sh
 
 # 设置 ENTRYPOINT
-ENTRYPOINT ["/bin/sh", "-c", "$ENTRYPOINT_PATH"]
+#ENTRYPOINT ["/bin/sh", "-c", "$ENTRYPOINT_PATH"]
+ENTRYPOINT /bin/sh -c "$ENTRYPOINT_PATH"
