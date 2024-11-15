@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+    - name: my-container
+      image: test:v1
+      command: [ "bin/sh" ]
+      args: [ "/home/test/start-prod.sh", "--param", "some_value" ]
