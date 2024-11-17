@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: pvs-demo-
+spec:
+  entrypoint: main
+  volumeClaimTemplates:
+    - metadata:
+        name: shared-workdir  # 共享的 PVC 名称
+      spec:
+        accessModes: ["ReadWriteMany"]  # 多个 Pod 可以同时读取和写入
+        resources:
+          requests:
+            storage: 1Gi
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: git-clone
+            template: git-clone
+          - name: process-files
+            template: process-files
+            dependencies: [git-clone]  # 依赖 git-clone 任务
+
+    - name: git-clone
+      container:
+        image: alpine
+        command: [sh, -c]
+        args:
+          - |
+            echo 'Cloning repository...'
+            apk add --no-cache git
+            git clone https://gitee.com/qfxcoffee/shield.git /src
+            ls -la /src
+            cp -r /src/. /mnt/  # 将文件复制到挂载的 PVC 中
+        volumeMounts:
+          - name: shared-workdir  # 挂载 PVC
+            mountPath: /mnt  # 挂载到容器的 /mnt 目录
+
+    - name: process-files
+      container:
+        image: alpine
+        command: [sh, -c]
+        args:
+          - |
+            echo 'Processing files...'
+            ls -la /mnt  # 查看挂载的目录内容
+            # 可以在这里对文件进行处理，例如文本替换、文件处理等
+        volumeMounts:
+          - name: shared-workdir  # 挂载相同的 PVC
+            mountPath: /mnt  # 挂载到容器的 /mnt 目录
