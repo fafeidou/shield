@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: git-file-processing-
+spec:
+  entrypoint: git-file-example
+  templates:
+    - name: git-file-example
+      dag:
+        tasks:
+          - name: clone-git-repo
+            template: clone-repo
+          - name: read-git-file
+            template: print-file
+            depends: "clone-git-repo"
+            arguments:
+              artifacts:
+                - name: git-files
+                  from: "{{tasks.clone-git-repo.outputs.artifacts.repo-artifact}}"
+
+    - name: clone-repo
+      container:
+        image: alpine:latest
+        command: [sh, -c]
+        args:
+          - |
+            apk add --no-cache git
+            git clone https://gitee.com/qfxcoffee/shield.git /tmp/repo
+      outputs:
+        artifacts:
+          - name: repo-artifact
+            path: /tmp/repo
+
+    - name: print-file
+      inputs:
+        artifacts:
+          - name: git-files
+            path: /tmp/git-files
+      container:
+        image: alpine:latest
+        command: [sh, -c]
+        args:
+          - |
+            cat /tmp/git-files/pom.xml
