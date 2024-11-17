@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM docker.unsee.tech/ubuntu:22.04
 
 # 设置工作目录
 ENV WORKDIR_PATH=/home/test

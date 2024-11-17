@@ -29,23 +29,25 @@ spec:
         args:
           - |
             echo 'Cloning repository...'
-            apk add --no-cache git
-            git clone https://gitee.com/qfxcoffee/shield.git /src
-            ls -la /src
-            cp -r /src/. /mnt/  # 将文件复制到挂载的 PVC 中
+            wget https://gitee.com/qfxcoffee/shield/raw/master/sh/docker_study/Dockerfile
+            ls -la
+            cp Dockerfile /mnt/  # 将文件复制到挂载的 PVC 中
+            ls -la /mnt
+            cat Dockerfile
         volumeMounts:
           - name: shared-workdir  # 挂载 PVC
             mountPath: /mnt  # 挂载到容器的 /mnt 目录
 
     - name: process-files
       container:
-        image: alpine
-        command: [sh, -c]
+        image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/gcr.io/kaniko-project/executor:v1.23.1  # Kaniko 镜像
+        command: [ "/kaniko/executor" ]
         args:
-          - |
-            echo 'Processing files...'
-            ls -la /mnt  # 查看挂载的目录内容
-            # 可以在这里对文件进行处理，例如文本替换、文件处理等
+          - "--context=/mnt"  # Git clone 的目录
+          - "--dockerfile=/mnt/Dockerfile"  # Dockerfile 路径
+          - "--destination=192.168.56.115:5000/test-image:v2"  # 镜像名称和标签
+          - "--skip-tls-verify"  # 跳过 TLS 验证（如果使用 HTTP 协议）
+          - "--oci-layout-path=/kaniko/oci-layout"  # 用于构建镜像时存储 OCI 规范镜像文件
         volumeMounts:
           - name: shared-workdir  # 挂载相同的 PVC
             mountPath: /mnt  # 挂载到容器的 /mnt 目录

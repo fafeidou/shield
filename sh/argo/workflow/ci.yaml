@@ -1,0 +1,72 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: kaniko-build-
+spec:
+  entrypoint: build-kaniko
+  volumeClaimTemplates:
+    - metadata:
+        name: shared-workdir  # 共享的 PVC 名称
+      spec:
+        accessModes: [ "ReadWriteMany" ]  # 多个 Pod 可以同时读取和写入
+        resources:
+          requests:
+            storage: 1Gi
+  serviceAccountName: workflow
+  templates:
+    - name: build-kaniko
+      dag:
+        tasks:
+          - name: clone-git-repo
+            template: git-clone
+            arguments:
+              parameters:
+                - name: git-repo
+                  value: "https://gitee.com/qfxcoffee/shield.git"  # Git 仓库 URL
+          - name: build-image
+            template: kaniko-build
+            dependencies: [clone-git-repo]
+            arguments:
+              parameters:
+                - name: image-name
+                  value: "192.168.56.115:5000/test-image"  # 镜像名称
+                - name: image-tag
+                  value: "latest"  # 镜像标签
+
+    - name: git-clone
+      inputs:
+        parameters:
+          - name: git-repo
+      container:
+        image: alpine:latest
+        command: [sh, -c]
+        args:
+          - |
+            echo "Cloning repository..."
+            apk add --no-cache git
+            git clone {{inputs.parameters.git-repo}} /src
+            ls -la /src
+            ls -la /mnt  # 确认 /mnt 是否已正确挂载
+            cp -r /src/. /mnt/  # 将文件复制到挂载的 PVC 中
+        volumeMounts:
+          - name: shared-workdir  # 挂载 PVC
+            mountPath: /mnt  # 挂载到容器的 /mnt 目录
+    - name: kaniko-build
+      inputs:
+        parameters:
+          - name: image-name
+          - name: image-tag
+      container:
+        image: gcr.io/kaniko-project/executor:latest  # Kaniko 镜像
+        command: ["/kaniko/executor"]
+        args:
+          - "ls -la /mnt"
+          - "--context=/mnt"  # Git clone 的目录
+          - "--dockerfile=/mnt/sh/docker_study/Dockerfile"  # Dockerfile 路径
+          - "--destination={{inputs.parameters.image-name}}:{{inputs.parameters.image-tag}}"  # 镜像名称和标签
+          - "--skip-tls-verify"  # 跳过 TLS 验证（如果使用 HTTP 协议）
+          - "--oci-layout-path=/kaniko/oci-layout"  # 用于构建镜像时存储 OCI 规范镜像文件
+        volumeMounts:
+          - name: shared-workdir  # 挂载 PVC
+            mountPath: /mnt  # 挂载到容器的 /mnt 目录
+
