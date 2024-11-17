@@ -43,8 +43,11 @@ spec:
           - "--context=/mnt/sh/docker_study"  # Git clone 的目录
           - "--dockerfile=Dockerfile"  # Dockerfile 路径
           - "--destination=192.168.56.115:5000/test-image:v2"  # 镜像名称和标签
+          - "--build-arg=WORKDIR_PATH=/home/test"    # 可选的 Docker 构建参数
+          - "--build-arg=ENTRYPOINT_PATH=/home/test/start-dev.sh"
           - "--skip-tls-verify"  # 跳过 TLS 验证（如果使用 HTTP 协议）
           - "--oci-layout-path=/kaniko/oci-layout"  # 用于构建镜像时存储 OCI 规范镜像文件
+          - "--log-level=debug"  # 启用缓存
         volumeMounts:
           - name: shared-workdir  # 挂载相同的 PVC
             mountPath: /mnt  # 挂载到容器的 /mnt 目录
