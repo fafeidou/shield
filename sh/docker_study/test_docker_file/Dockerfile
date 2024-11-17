@@ -1,5 +1,5 @@
 # 使用基础镜像
-FROM alpine:latest
+FROM docker.unsee.tech/alpine:latest
 
 # 使用 RUN 指令在构建时输出 Hello World
 RUN echo "Hello World from RUN!"
