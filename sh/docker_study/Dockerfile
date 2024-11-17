@@ -14,6 +14,12 @@ ENV ENTRYPOINT_PATH=$WORKDIR_PATH/start-dev.sh
 
 WORKDIR $WORKDIR_PATH
 
+# 打印当前工作目录
+RUN echo "Current directory: $(pwd)"
+
+# 打印当前目录下的文件列表
+RUN echo "Files in current directory:" && ls -l
+
 # 复制启动脚本
 COPY ./app/start-prod.sh $WORKDIR_PATH/start-prod.sh
 COPY ./app/start-dev.sh $WORKDIR_PATH/start-dev.sh
