@@ -1,0 +1,7 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: my-workflow-
+spec:
+  workflowTemplateRef:
+    name: my-workflow-template   # 引用上面定义的模板

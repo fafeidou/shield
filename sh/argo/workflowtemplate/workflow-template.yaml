@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: my-workflow-template  # 模板的名称
+spec:
+  entrypoint: main    # 入口模板
+  templates:
+    - name: main      # 主模板，包含多个步骤
+      steps:
+        - - name: download
+            template: download-file
+        - - name: print-content
+            template: print-file-content
+
+    - name: download-file   # 下载文件模板
+      container:
+        image: busybox:1.35
+        command: [ "wget", "-O", "/tmp/file.txt", "https://gitee.com/qfxcoffee/shield/raw/master/sh/docker_study/Dockerfile" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /tmp
+
+    - name: print-file-content   # 打印文件内容模板
+      container:
+        image: busybox:1.35
+        command: [ "cat", "/tmp/file.txt" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /tmp
+
+    volumes:
+      - name: workdir
+        emptyDir: {}
