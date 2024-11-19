@@ -1,0 +1,26 @@
+FROM openjdk:8-jdk-slim
+
+# 使用 Debian 11 (bullseye) 的镜像源
+RUN echo "deb https://mirrors.aliyun.com/debian/ bullseye main non-free contrib" > /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y git wget tar \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 下载 Maven
+RUN wget https://maven.aliyun.com/nexus/content/groups/public/org/apache/maven/apache-maven/3.8.6/apache-maven-3.8.6-bin.tar.gz -P /tmp || (echo "Maven download failed!" && exit 1)
+
+# 解压 Maven 并创建符号链接
+RUN tar -xvzf /tmp/apache-maven-3.8.6-bin.tar.gz -C /usr/share/ \
+    && rm -f /tmp/apache-maven-3.8.6-bin.tar.gz \
+    && ln -s /usr/share/apache-maven-3.8.6/bin/mvn /usr/bin/mvn
+
+# 设置环境变量
+ENV MAVEN_HOME=/usr/share/apache-maven-3.8.6
+ENV PATH=$MAVEN_HOME/bin:$PATH
+
+# 设置工作目录
+WORKDIR /app
+
+# 默认命令
+CMD ["bash"]

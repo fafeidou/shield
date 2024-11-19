@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: dind-example-
+spec:
+  entrypoint: dind-example
+  templates:
+    - name: dind-example
+      container:
+        image: docker:19.03.12-dind
+        command: ["/bin/sh", "-c"]
+        args: [
+          "docker info"
+        ]
+        volumeMounts:
+          - name: docker-socket
+            mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket

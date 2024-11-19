@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: pvs-demo-
+spec:
+  entrypoint: main
+  volumeClaimTemplates:
+    - metadata:
+        name: shared-workdir  # 共享的 PVC 名称
+      spec:
+        accessModes: ["ReadWriteMany"]  # 多个 Pod 可以同时读取和写入
+        resources:
+          requests:
+            storage: 1Gi
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: git-clone
+            template: git-clone
+          - name: docker-build
+            template: docker-build
+            dependencies: [git-clone]
+
+    - name: git-clone
+      container:
+        image: git-maven-base:v1
+        command: [sh, -c]
+        args:
+          - |
+            git clone https://gitee.com/qfxcoffee/shield.git /src
+            cd /src/arthas-study && mvn clean package -DskipTests
+            cd /src/arthas-study/target
+            ls -la
+            mv arthas-study.jar /src/arthas-study.jar
+            mv /src/arthas-study/docker/Dockerfile /src/
+            cp -r /src/. /mnt/  # 将文件复制到挂载的 PVC 中
+        volumeMounts:
+          - name: shared-workdir  # 挂载 PVC
+            mountPath: /mnt  # 挂载到容器的 /mnt 目录
+
+    - name: docker-build
+      container:
+        image: docker:19.03.12-dind
+        command: [ "/bin/sh", "-c" ]
+        args: [
+          "docker info && cd /mnt && docker build -t my-image:v1 ."
+        ]
+        volumeMounts:
+          - name: shared-workdir  # 挂载共享 PVC，确保构建上下文可用
+            mountPath: /mnt  # 挂载到容器的 /mnt 目录
+          - name: docker-socket
+            mountPath: /var/run/docker.sock
+
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket
