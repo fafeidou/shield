@@ -38,13 +38,14 @@ spec:
             git clone https://gitee.com/qfxcoffee/shield.git /src
             cd /src/arthas-study && mvn clean package -DskipTests
             cd /src/arthas-study/target
-            ls -la
             mv arthas-study.jar /src/arthas-study.jar
             mv /src/arthas-study/docker/Dockerfile /src/
             cp -r /src/. /mnt/  # 将文件复制到挂载的 PVC 中
         volumeMounts:
           - name: shared-workdir  # 挂载 PVC
             mountPath: /mnt  # 挂载到容器的 /mnt 目录
+          - name: maven-repo-cache
+            mountPath: /root/.m2/repository  # 将 PVC 挂载到 Maven 本地仓库路径
 
     - name: docker-build
       container:
@@ -66,3 +67,7 @@ spec:
       hostPath:
         path: /var/run/docker.sock
         type: Socket
+    - name: maven-repo-cache
+      hostPath:
+        path: /root/.m2/repository  # 宿主机上的目录路径
+        type: Directory  # 可以是 Directory 或 File，取决于你的需求
