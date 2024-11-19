@@ -12,6 +12,13 @@ spec:
         resources:
           requests:
             storage: 1Gi
+    - metadata:
+        name: maven-repo-cache  # 用于缓存 Maven 本地仓库
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 2Gi
   templates:
     - name: main
       dag:
@@ -51,6 +58,8 @@ spec:
             mountPath: /mnt  # 挂载到容器的 /mnt 目录
           - name: docker-socket
             mountPath: /var/run/docker.sock
+          - name: maven-repo-cache
+            mountPath: /root/.m2/repository  # 将 PVC 挂载到 Maven 本地仓库路径
 
   volumes:
     - name: docker-socket

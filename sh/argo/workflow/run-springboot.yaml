@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: springboot-service-workflow-
+spec:
+  entrypoint: springboot-workflow
+  templates:
+    - name: springboot-workflow
+      steps:
+        - - name: create-service
+            template: create-service
+        - - name: start-springboot-container
+            template: springboot-container
+
+    - name: create-service
+      resource:
+        action: apply
+        manifest: |
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: springboot-service
+          spec:
+            selector:
+              app: springboot-app
+            ports:
+              - protocol: TCP
+                port: 8080
+                targetPort: 8080
+            type: NodePort  # 可以根据需要修改为 LoadBalancer 或 NodePort
+
+    - name: springboot-container
+      container:
+        name: springboot-app
+        image: my-image:v1  # 替换成你的 Docker 镜像
+        command: [ "java" ]  # 显式指定命令为 `java`
+        args: [ "-jar", "arthas-study.jar" ]  # 显式指定 `arthas-study.jar` 文件作为参数
+        ports:
+          - containerPort: 8080
+        env:
+          - name: SPRING_PROFILES_ACTIVE
+            value: "prod"
+      metadata:
+        labels:
+          app: springboot-app
