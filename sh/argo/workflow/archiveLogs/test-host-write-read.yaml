@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: hostpath-demo-
+spec:
+  entrypoint: main
+  artifactRepositoryRef:
+    configMap: artifact-repositories
+    key: oss-dev
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: write-to-host
+            template: write-file
+          - name: read-from-host
+            template: read-file
+            dependencies: [write-to-host]  # read-from-host 依赖 write-to-host
+
+    - name: write-file
+      container:
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args: [
+          "echo 'Hello from Argo!' > /mnt/data/hello.txt"  # 写入宿主机文件
+        ]
+        volumeMounts:
+          - name: host-volume  # 挂载宿主机目录
+            mountPath: /mnt/data  # 挂载到容器内的路径
+
+    - name: read-file
+      container:
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args: [
+          "cat /mnt/data/hello.txt"  # 读取宿主机文件
+        ]
+        volumeMounts:
+          - name: host-volume  # 挂载宿主机目录
+            mountPath: /mnt/data  # 挂载到容器内的路径
+
+  volumes:
+    - name: host-volume
+      hostPath:
+        path: /root/.m2/repository  # 宿主机上的目录路径
+        type: Directory  # 可以是 Directory 或 File，取决于你的需求

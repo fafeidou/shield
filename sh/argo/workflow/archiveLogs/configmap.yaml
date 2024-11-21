@@ -1,0 +1,24 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: artifact-repositories
+  namespace: argo
+data:
+  oss-dev: |
+    archiveLogs: true
+    s3:
+      keyFormat: "my-artifacts\
+        /{{workflow.creationTimestamp.Y}}-{{workflow.creationTimestamp.m}}-{{workflow.creationTimestamp.d}}\
+        /{{workflow.name}}\
+        /{{pod.name}}"
+      endpoint: test.aliyuncs.com
+      bucket: oss-bucket
+      insecure: true
+      accessKeySecret:
+        name: secret-yaml-key
+        key: access-key
+      secretKeySecret:
+        name: secret-yaml-key
+        key: secret-key
+
+        
