@@ -20,9 +20,18 @@
  */
 package com.example.proguard.resolve;
 
+import com.example.proguard.utis.GsonUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 import proguard.obfuscate.MappingProcessor;
+import proguard.retrace.FrameInfo;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -31,10 +40,14 @@ import java.io.*;
  *
  * @author Eric Lafortune
  */
+@Slf4j
 public class CustomizeMappingReader
 {
     private final File mappingFile;
 
+    private static Map<String, String> classMap = new HashMap<>();
+    private static Map<String, List<String>> methodMap = new HashMap<>();
+    private static Map<String, List<String>> fieldMap = new HashMap<>();
 
     public CustomizeMappingReader(File mappingFile)
     {
@@ -135,7 +148,9 @@ public class CustomizeMappingReader
 
         // Process this class name mapping.
         boolean interested = mappingProcessor.processClassMapping(className, newClassName);
-
+        // Process this class name mapping.
+        log.info("[CLASS]+++{}+++{}",newClassName,className);
+        classMap.put(newClassName,className);
         return interested ? className : null;
     }
 
@@ -203,6 +218,8 @@ public class CustomizeMappingReader
                                                      name,
                                                      newClassName,
                                                      newName);
+                log.info("[FIELD]+++{}+++{}+++{}",newClassName, newName, GsonUtil.toJson(new CustomizeFieldInfo(className, type, name)));
+                fieldMap.computeIfAbsent(newClassName + "." + newName, s -> new ArrayList<>()).add(GsonUtil.toJson(new CustomizeFieldInfo(className, type, name)));
             }
             else
             {
@@ -225,7 +242,6 @@ public class CustomizeMappingReader
                 }
 
                 String arguments = line.substring(argumentIndex1 + 1, argumentIndex2).trim();
-
                 mappingProcessor.processMethodMapping(className,
                                                       firstLineNumber,
                                                       lastLineNumber,
@@ -236,7 +252,179 @@ public class CustomizeMappingReader
                                                       newFirstLineNumber,
                                                       newLastLineNumber,
                                                       newName);
+
+                log.info("[METHOD]+++{}+++{}+++{}",newClassName,newName, GsonUtil.toJson(new CustomizeMethodInfo(newFirstLineNumber, newLastLineNumber, className,
+                        firstLineNumber, lastLineNumber, type, name, arguments)));
+                methodMap.computeIfAbsent(newClassName + "." + newName, s -> new ArrayList<>()).add(GsonUtil.toJson(new CustomizeMethodInfo(newFirstLineNumber, newLastLineNumber, className,
+                        firstLineNumber, lastLineNumber, type, name, arguments)));
             }
         }
+    }
+
+    public Map<String, String> getClassMap() {
+        return classMap;
+    }
+
+    public Map<String, List<String>> getMethodeMap() {
+        return methodMap;
+    }
+
+    public Map<String, List<String>> getFieldMap() {
+        return fieldMap;
+    }
+
+
+    /**
+     * 自定义transform
+     * @param frameInfo
+     */
+    public List<FrameInfo> transform(FrameInfo frameInfo) throws IOException {
+        List<FrameInfo> result = new ArrayList<>();
+        String className = originalClassName(frameInfo.getClassName());
+        if (StringUtils.isBlank(className)) {
+            return result;
+        }
+        readOriginalFields(className, frameInfo, result);
+
+        readOriginalMethods(className, frameInfo, result);
+
+        if (CollectionUtils.isEmpty(result)) {
+            result.add(new FrameInfo(className,
+                    sourceFileName(className),
+                    frameInfo.getLineNumber(),
+                    frameInfo.getType(),
+                    frameInfo.getFieldName(),
+                    frameInfo.getMethodName(),
+                    frameInfo.getArguments()));
+        }
+
+        return result;
+    }
+
+    private static void readOriginalMethods(String originalClassName, FrameInfo obfuscatedFrame, List<FrameInfo> originalFieldFrames) {
+        // Class name -> obfuscated method names.
+
+        List<String> members = methodMap.get(originalClassName + "." + obfuscatedFrame.getMethodName());
+        List<CustomizeMethodInfo> customizeMethodInfos = new ArrayList<>();
+        if (members != null) {
+            for (String member : members) {
+                customizeMethodInfos.add(GsonUtil.fromJson(member.toString(), CustomizeMethodInfo.class));
+            }
+        }
+        if (!CollectionUtils.isEmpty(customizeMethodInfos)) {
+            int obfuscatedLineNumber = obfuscatedFrame.getLineNumber();
+
+            String obfuscatedType = obfuscatedFrame.getType();
+            String originalType = obfuscatedType == null ? null :
+                    originalType(obfuscatedType);
+
+            String obfuscatedArguments = obfuscatedFrame.getArguments();
+            String originalArguments = obfuscatedArguments == null ? null :
+                    originalArguments(obfuscatedArguments);
+
+            for (CustomizeMethodInfo methodInfo : customizeMethodInfos) {
+                if (methodInfo.matches(obfuscatedLineNumber,
+                        originalType,
+                        originalArguments)) {
+                    // Do we have a different original first line number?
+                    // We're allowing unknown values, represented as 0.
+                    int lineNumber = obfuscatedFrame.getLineNumber();
+                    if (methodInfo.originalFirstLineNumber != methodInfo.obfuscatedFirstLineNumber) {
+                        // Do we have an original line number range and
+                        // sufficient information to shift the line number?
+                        lineNumber = methodInfo.originalLastLineNumber != 0 &&
+                                methodInfo.originalLastLineNumber != methodInfo.originalFirstLineNumber &&
+                                methodInfo.obfuscatedFirstLineNumber != 0 &&
+                                lineNumber != 0 ?
+                                methodInfo.originalFirstLineNumber - methodInfo.obfuscatedFirstLineNumber + lineNumber :
+                                methodInfo.originalFirstLineNumber;
+                    }
+
+                    originalFieldFrames.add(new FrameInfo(methodInfo.originalClassName,
+                            sourceFileName(methodInfo.originalClassName),
+                            lineNumber,
+                            methodInfo.originalType,
+                            obfuscatedFrame.getFieldName(),
+                            methodInfo.originalName,
+                            methodInfo.originalArguments));
+                }
+            }
+        }
+    }
+
+    private static void readOriginalFields(String originalClassName, FrameInfo obfuscatedFrame, List<FrameInfo> originalFieldFrames) {
+        // Class name -> obfuscated field names.
+        if (StringUtils.isEmpty(obfuscatedFrame.getFieldName())) {
+            return;
+        }
+        List<String> members = fieldMap.get(originalClassName + "." + obfuscatedFrame.getFieldName());
+        List<CustomizeFieldInfo> customizeFieldInfos = new ArrayList<>();
+        if (members != null) {
+            for (String member : members) {
+                customizeFieldInfos.add(GsonUtil.fromJson(member.toString(), CustomizeFieldInfo.class));
+            }
+        }
+        if (!CollectionUtils.isEmpty(customizeFieldInfos)) {
+            String obfuscatedType = obfuscatedFrame.getType();
+            String originalType = obfuscatedType == null ? null :
+                    originalType(obfuscatedType);
+            for (CustomizeFieldInfo fieldInfo : customizeFieldInfos) {
+                if (fieldInfo.matches(originalType)) {
+                    originalFieldFrames.add(new FrameInfo(fieldInfo.originalClassName,
+                            sourceFileName(fieldInfo.originalClassName),
+                            obfuscatedFrame.getLineNumber(),
+                            fieldInfo.originalType,
+                            fieldInfo.originalName,
+                            obfuscatedFrame.getMethodName(),
+                            obfuscatedFrame.getArguments()));
+                }
+            }
+        }
+    }
+
+    private static String originalClassName(String obfuscatedClassName) {
+        String originalClassName = classMap.get(obfuscatedClassName);
+
+        return originalClassName != null ?
+                originalClassName :
+                obfuscatedClassName;
+    }
+
+    private static String originalType(String obfuscatedType) {
+        int index = obfuscatedType.indexOf('[');
+
+        return index >= 0 ?
+                originalClassName(obfuscatedType.substring(0, index)) + obfuscatedType.substring(index) :
+                originalClassName(obfuscatedType);
+    }
+
+    private static String originalArguments(String obfuscatedArguments) {
+        StringBuilder originalArguments = new StringBuilder();
+
+        int startIndex = 0;
+        while (true) {
+            int endIndex = obfuscatedArguments.indexOf(',', startIndex);
+            if (endIndex < 0) {
+                break;
+            }
+
+            originalArguments.append(originalType(obfuscatedArguments.substring(startIndex, endIndex).trim())).append(',');
+
+            startIndex = endIndex + 1;
+        }
+
+        originalArguments.append(originalType(obfuscatedArguments.substring(startIndex).trim()));
+
+        return originalArguments.toString();
+    }
+
+    private static String sourceFileName(String className) {
+        int index1 = className.lastIndexOf('.') + 1;
+        int index2 = className.indexOf('$', index1);
+
+        return (index2 > 0 ?
+                className.substring(index1, index2) :
+                className.substring(index1)) +
+                ".java";
     }
 }
