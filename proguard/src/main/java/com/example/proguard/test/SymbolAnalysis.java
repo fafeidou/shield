@@ -18,14 +18,17 @@ public class SymbolAnalysis {
         mappingReader.pump(frameRemapper);
 
         String crashStack = "Caused by: java.lang.RuntimeException: test exception\n" +
-                "        at com.example.proguard.a.b.<init>(User.java:25) ~[classes!/:0.0.1]\n" +
-                "        at com.example.proguard.ProguardApplication.run(ProguardApplication.java:17)";
+                "        at com.example.proguard.b.b.<init>(User.java:25) ~[classes!/:0.0.1]\n" +
+                "        at com.example.proguard.ProguardApplication.run(ProguardApplication.java:22) [classes!/:0.0.1]\n" +
+                "        at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:804) [spring-boot-2.4.2.jar!/:2.4.2]\n" +
+                "        ... 13 common frames omitted\n";
 
         final String[] stackList = crashStack.split("\n");
 
         for (String stack : stackList) {
             FrameInfo frameInfo = pattern.parse(stack);
             if (frameInfo == null) {
+                System.out.println(stack);
                 continue;
             }
             for (FrameInfo retracedFrame : frameRemapper.transform(frameInfo)) {
