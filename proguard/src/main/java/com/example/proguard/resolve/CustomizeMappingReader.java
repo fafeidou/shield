@@ -61,12 +61,12 @@ public class CustomizeMappingReader
      */
     public void pump(MappingProcessor mappingProcessor) throws IOException
     {
-        LineNumberReader reader =
-            new LineNumberReader(
-            new BufferedReader(
-            new InputStreamReader(
-            new FileInputStream(mappingFile), "UTF-8")));
-        try
+
+        try(LineNumberReader reader =
+                    new LineNumberReader(
+                            new BufferedReader(
+                                    new InputStreamReader(
+                                            new FileInputStream(mappingFile), "UTF-8")));)
         {
             String className = null;
 
@@ -104,17 +104,6 @@ public class CustomizeMappingReader
         catch (IOException ex)
         {
             throw new IOException("Can't process mapping file (" + ex.getMessage() + ")");
-        }
-        finally
-        {
-            try
-            {
-                reader.close();
-            }
-            catch (IOException ex)
-            {
-                // This shouldn't happen.
-            }
         }
     }
 
