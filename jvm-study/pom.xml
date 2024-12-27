@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.shield</groupId>
         <artifactId>shield</artifactId>
-        <version>0.0.1</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>jvm-study</artifactId>
