@@ -62,47 +62,40 @@ public class CustomizeMappingReader
     public void pump(MappingProcessor mappingProcessor) throws IOException
     {
 
-        try(LineNumberReader reader =
-                    new LineNumberReader(
-                            new BufferedReader(
-                                    new InputStreamReader(
-                                            new FileInputStream(mappingFile), "UTF-8")));)
-        {
+        try (LineNumberReader reader =
+                     new LineNumberReader(
+                             new BufferedReader(
+                                     new InputStreamReader(
+                                             new FileInputStream(mappingFile), "UTF-8")));
+             CustomizeMappingWriter writer = new CustomizeMappingWriter(new File("proguard/target/customize_mapping.txt"))) {
+
             String className = null;
 
             // Read the subsequent class mappings and class member mappings.
-            while (true)
-            {
+            while (true) {
                 String line = reader.readLine();
 
-                if (line == null)
-                {
+                if (line == null) {
                     break;
                 }
 
                 line = line.trim();
 
                 // Is it a non-comment line?
-                if (!line.startsWith("#"))
-                {
+                if (!line.startsWith("#")) {
                     // Is it a class mapping or a class member mapping?
-                    if (line.endsWith(":"))
-                    {
+                    if (line.endsWith(":")) {
                         // Process the class mapping and remember the class's
                         // old name.
-                        className = processClassMapping(line, mappingProcessor);
-                    }
-                    else if (className != null)
-                    {
+                        className = processClassMapping(line, mappingProcessor,writer);
+                    } else if (className != null) {
                         // Process the class member mapping, in the context of
                         // the current old class name.
-                        processClassMemberMapping(className, line, mappingProcessor);
+                        processClassMemberMapping(className, line, mappingProcessor,writer);
                     }
                 }
             }
-        }
-        catch (IOException ex)
-        {
+        } catch (IOException ex) {
             throw new IOException("Can't process mapping file (" + ex.getMessage() + ")");
         }
     }
@@ -114,8 +107,7 @@ public class CustomizeMappingReader
      * or null if any subsequent class member lines can be ignored.
      */
     private String processClassMapping(String           line,
-                                       MappingProcessor mappingProcessor)
-    {
+                                       MappingProcessor mappingProcessor, CustomizeMappingWriter writer) throws IOException {
         // See if we can parse "___ -> ___:", containing the original
         // class name and the new class name.
 
@@ -139,6 +131,7 @@ public class CustomizeMappingReader
         boolean interested = mappingProcessor.processClassMapping(className, newClassName);
         // Process this class name mapping.
         log.info("[CLASS]+++{}+++{}",newClassName,className);
+        writer.writeLine(String.format("[CLASS]+++%s+++%s",newClassName,className));
         classMap.put(newClassName,className);
         return interested ? className : null;
     }
@@ -150,8 +143,7 @@ public class CustomizeMappingReader
      */
     private void processClassMemberMapping(String           className,
                                            String           line,
-                                           MappingProcessor mappingProcessor)
-    {
+                                           MappingProcessor mappingProcessor, CustomizeMappingWriter writer) throws IOException {
         // See if we can parse one of
         //     ___ ___ -> ___
         //     ___:___:___ ___(___) -> ___
@@ -208,6 +200,7 @@ public class CustomizeMappingReader
                                                      newClassName,
                                                      newName);
                 log.info("[FIELD]+++{}+++{}+++{}",newClassName, newName, GsonUtil.toJson(new CustomizeFieldInfo(className, type, name)));
+                writer.writeLine(String.format("[FIELD]+++%s+++%s+++%s",newClassName, newName, GsonUtil.toJson(new CustomizeFieldInfo(className, type, name))));
                 fieldMap.computeIfAbsent(newClassName + "." + newName, s -> new ArrayList<>()).add(GsonUtil.toJson(new CustomizeFieldInfo(className, type, name)));
             }
             else
@@ -244,6 +237,8 @@ public class CustomizeMappingReader
 
                 log.info("[METHOD]+++{}+++{}+++{}",newClassName,newName, GsonUtil.toJson(new CustomizeMethodInfo(newFirstLineNumber, newLastLineNumber, className,
                         firstLineNumber, lastLineNumber, type, name, arguments)));
+                writer.writeLine(String.format("[METHOD]+++%s+++%s+++%s",newClassName,newName, GsonUtil.toJson(new CustomizeMethodInfo(newFirstLineNumber, newLastLineNumber, className,
+                        firstLineNumber, lastLineNumber, type, name, arguments))));
                 methodMap.computeIfAbsent(newClassName + "." + newName, s -> new ArrayList<>()).add(GsonUtil.toJson(new CustomizeMethodInfo(newFirstLineNumber, newLastLineNumber, className,
                         firstLineNumber, lastLineNumber, type, name, arguments)));
             }
