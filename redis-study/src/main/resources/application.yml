@@ -1,0 +1,5 @@
+spring:
+  redis:
+    host: 192.168.56.112
+    port: 6379
+    timeout: 2000ms
