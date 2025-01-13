@@ -12,6 +12,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 # 默认选择开发环境的启动脚本
 ENV ENTRYPOINT_PATH=$WORKDIR_PATH/start-dev.sh
 
+# 替换为国内镜像源
+RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu/|g' /etc/apt/sources.list && \
+    sed -i 's|http://security.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu/|g' /etc/apt/sources.list \
+
 # 更新包列表并安装 Python 3 和 pip
 RUN apt-get update && \
     apt-get install -y python3 python3-pip && \
