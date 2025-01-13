@@ -12,15 +12,17 @@ ENV DEBIAN_FRONTEND=noninteractive
 # 默认选择开发环境的启动脚本
 ENV ENTRYPOINT_PATH=$WORKDIR_PATH/start-dev.sh
 
-# 更换apt源
-RUN sed -i 's@/deb.debian.org/@/mirrors.aliyun.com/@g' /etc/apt/sources.list
+# 更新包列表并安装 Python 3 和 pip
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    apt-get clean
 
-# 更新apt源
-RUN apt-get clean && apt-get update
+# 设置 Python 3 为默认的 Python 版本
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
-# 安装python环境
-RUN apt-get install -y python3 python3-pip python3-dev \
-    build-essential libssl-dev libffi-dev \
+# 验证安装
+RUN python --version
+RUN pip3 --version
 
 WORKDIR $WORKDIR_PATH
 
