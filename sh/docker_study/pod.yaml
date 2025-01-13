@@ -8,6 +8,6 @@ spec:
       image: test:v1
       env:
         - name: ENTRYPOINT_PATH
-          value: "/home/test/start-prod.sh"
-        - name: MESSAGE
-          value: "hello world!"
+          value: "/home/test/start-dev.sh"
+        - name: TEST_ENV
+          value: "dynamic param"
