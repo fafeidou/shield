@@ -40,7 +40,7 @@ RUN echo "Files in current directory:" && ls -l
 # 复制启动脚本
 COPY ./app/start-prod.sh $WORKDIR_PATH/start-prod.sh
 COPY ./app/start-dev.sh $WORKDIR_PATH/start-dev.sh
-
+COPY ./app/hello.py $WORKDIR_PATH/hello.py
 # 给脚本赋予可执行权限
 RUN chmod +x $WORKDIR_PATH/start-prod.sh $WORKDIR_PATH/start-dev.sh
 
