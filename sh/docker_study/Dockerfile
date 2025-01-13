@@ -13,8 +13,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV ENTRYPOINT_PATH=$WORKDIR_PATH/start-dev.sh
 
 # 替换为国内镜像源
-RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu/|g' /etc/apt/sources.list && \
-    sed -i 's|http://security.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu/|g' /etc/apt/sources.list \
+# 替换为阿里云镜像源
+RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu/|g' /etc/apt/sources.list
+RUN sed -i 's|http://security.ubuntu.com/ubuntu/|http://mirrors.aliyun.com/ubuntu/|g' /etc/apt/sources.list
 
 # 更新包列表并安装 Python 3 和 pip
 RUN apt-get update && \
