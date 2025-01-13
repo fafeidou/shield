@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: env-workflow-
+spec:
+  entrypoint: main
+  # 定义全局环境变量
+  env:
+    - name: TEST_ENV
+      value: "This is a global env"
+  templates:
+    - name: main
+      container:
+        image: test:v1
+        command: [sh, -c]
+        args: ["echo $TEST_ENV"]
