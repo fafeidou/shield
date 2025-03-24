@@ -39,6 +39,7 @@
         <module>es-study</module>
         <module>redis-study</module>
         <module>jvm-study</module>
+        <module>mybatis-study</module>
     </modules>
 
     <dependencies>

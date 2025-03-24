@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <settings>
+        <!-- 通知 MyBatis 框架开启二级缓存 ，并且单个mapper中需要配置<cache/> -->
+        <setting name="cacheEnabled" value="false"/>
+        <!--默认为 SESSION 级别，一级缓存默认打开，设置为 STATEMENT 可以关闭一级缓存-->
+        <!--或者每个mapper中statement，也可以关闭一级缓存flushCache="true"-->
+        <setting name="localCacheScope" value="SESSION"/>
+    </settings>
+
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://192.168.56.112:3306/testdb"/>
+                <property name="username" value="root"/>
+                <property name="password" value="root"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <mapper resource="com/example/mapper/UserMapper.xml"/>
+    </mappers>
+
+</configuration>
