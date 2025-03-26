@@ -10,6 +10,9 @@ org.apache.ibatis.session.defaults.DefaultSqlSession.getMapper
 
 ## 何时使用动态代理的?
 再真正调用mapper方法时，会调用MapperProxy的invoke方法
+```declarative
+UserMapper mapper = session.getMapper(UserMapper.class);
+```
 org.apache.ibatis.binding.MapperProxy.invoke
     org.apache.ibatis.binding.MapperProxy.PlainMethodInvoker.invoke
         给sql封装参数，调用jdbc
@@ -99,3 +102,6 @@ https://blog.csdn.net/Dongguabai/article/details/124052146 禁用 MyBatis 一级
 https://zhuanlan.zhihu.com/p/97879019 Mybatis运行原理
 
 https://www.cnblogs.com/cxuanBlog/p/11333021.html MyBatis 二级缓存
+
+
+深入详解Mybatis的架构原理与6大核心流程 https://mp.weixin.qq.com/s?__biz=MjM5NzM0MjcyMQ==&mid=2650157327&idx=4&sn=7b863e60f3afebc69838d9354b096c9c&chksm=bfa7383672f8978d6daf2c2210fff27b8fcfb2b2b2eea8997b321c52dd2309031f0d1fd06c1c&mpshare=1&scene=23&srcid=032379OO6Yl6ieQghZzHgyhU&sharer_shareinfo=49ffdf8d25cc73abc6b7cec4afbd86c3&sharer_shareinfo_first=e330dcdbaca57b1c5d298fa9747cd1f0%23rd
