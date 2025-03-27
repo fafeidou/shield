@@ -90,7 +90,9 @@ public class JdbcDemo {
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setLong(1, id);
-            try (ResultSet rs = pstmt.executeQuery()) {
+            pstmt.execute();
+            ResultSet resultSet = pstmt.getResultSet();
+            try (ResultSet rs = resultSet) {
                 if (rs.next()) {
                     return mapResultSetToUser(rs);
                 }

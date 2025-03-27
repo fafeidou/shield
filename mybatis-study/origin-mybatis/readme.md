@@ -1,6 +1,33 @@
-## 解析阶段解析原始sql，封装成MappedStatement?
-org.apache.ibatis.builder.MapperBuilderAssistant.addMappedStatement(java.lang.String, org.apache.ibatis.mapping.SqlSource, org.apache.ibatis.mapping.StatementType, org.apache.ibatis.mapping.SqlCommandType, java.lang.Integer, java.lang.Integer, java.lang.String, java.lang.Class<?>, java.lang.String, java.lang.Class<?>, org.apache.ibatis.mapping.ResultSetType, boolean, boolean, boolean, org.apache.ibatis.executor.keygen.KeyGenerator, java.lang.String, java.lang.String, java.lang.String, org.apache.ibatis.scripting.LanguageDriver, java.lang.String, boolean)
+## JDBC 是怎么操作数据库的？
 
+```java
+public static User getUserById(long id) throws SQLException {
+    String sql = "SELECT * FROM users WHERE id = ?";
+
+    try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setLong(1, id);
+        pstmt.execute();
+        ResultSet resultSet = pstmt.getResultSet();
+        try (ResultSet rs = resultSet) {
+            if (rs.next()) {
+                return mapResultSetToUser(rs);
+            }
+        }
+    }
+    return null;
+}
+
+private static User mapResultSetToUser(ResultSet rs) throws SQLException {
+    return new User(rs.getLong("id"), rs.getString("username"), rs.getString("email"));
+}
+```
+
+## 解析阶段解析原始sql，封装成MappedStatement?
+可以断点到这个地方看下
+org.apache.ibatis.builder.MapperBuilderAssistant.addMappedStatement(java.lang.String, org.apache.ibatis.mapping.SqlSource, org.apache.ibatis.mapping.StatementType, org.apache.ibatis.mapping.SqlCommandType, java.lang.Integer, java.lang.Integer, java.lang.String, java.lang.Class<?>, java.lang.String, java.lang.Class<?>, org.apache.ibatis.mapping.ResultSetType, boolean, boolean, boolean, org.apache.ibatis.executor.keygen.KeyGenerator, java.lang.String, java.lang.String, java.lang.String, org.apache.ibatis.scripting.LanguageDriver, java.lang.String, boolean)
+最终添加到Configuration中的map对象中
+org.apache.ibatis.session.Configuration.mappedStatements
 ## 动态代理什么时候生成的?
 org.apache.ibatis.session.defaults.DefaultSqlSession.getMapper
     org.apache.ibatis.binding.MapperRegistry.getMapper
@@ -17,7 +44,10 @@ org.apache.ibatis.binding.MapperProxy.invoke
     org.apache.ibatis.binding.MapperProxy.PlainMethodInvoker.invoke
         给sql封装参数，调用jdbc
         org.apache.ibatis.scripting.defaults.DefaultParameterHandler.setParameters
-
+            执行jdbc的execute
+            org.apache.ibatis.executor.statement.PreparedStatementHandler.query
+                    使用resultSet获取结果
+                org.apache.ibatis.type.LongTypeHandler.getNullableResult(java.sql.ResultSet, java.lang.String)
 ## mybatis 一二级缓存怎么实现的?
 * 一级SqlSession 级别（默认开启）
 
