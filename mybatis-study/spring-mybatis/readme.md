@@ -23,3 +23,5 @@ org.mybatis.spring.mapper.ClassPathMapperScanner.processBeanDefinitions
 BeanDefinitionRegistryPostProcessor 是在生命周期的哪一步？
 
 从BeanFactory入手,讲透Spring整合Mybatis的底层原理 https://mp.weixin.qq.com/s?__biz=MzU2NjU3Nzg2Mg==&mid=2247506749&idx=2&sn=df69cdc04926803ae04f286d96f1960f&chksm=fd9d8074305284c182f60a2e71d5a435e2e89b4a6e5a3d9fc4276b08e95726853924c8aeb8ed&mpshare=1&scene=23&srcid=0323tUqWMkR6uUkUS45XY6pp&sharer_shareinfo=c496faf032a6eda343af54a8785418f9&sharer_shareinfo_first=86fc76670c31e012ed02c821b5fd5cb1%23rd
+
+聊透 Spring Bean 的生命周期 https://mp.weixin.qq.com/s?__biz=MzUxOTc4NjEyMw==&mid=2247556382&idx=3&sn=01285130ab0fd30aace1309e94301a98&chksm=f85f7bbaed962cb65f975c7f2bb205c17fbec8078892b1d0b6f64efc8060d9438ab790ba2b2c&mpshare=1&scene=23&srcid=0327Y7HGJv7YG6bvm0lrIgmW&sharer_shareinfo=469533689e274470acb5646035a72e48&sharer_shareinfo_first=469533689e274470acb5646035a72e48%23rd
