@@ -16,6 +16,7 @@
         <module>spring-mybatis</module>
         <module>spring-mybatis-plus</module>
         <module>origin-mybatis-plus</module>
+        <module>sharding-jdbc</module>
     </modules>
 
     <properties>

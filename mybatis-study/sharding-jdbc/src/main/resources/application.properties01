@@ -1,0 +1,60 @@
+## 水平分表
+
+server.port=56081
+server.servlet.encoding.enabled=true
+server.servlet.encoding.charset=utf-8
+server.servlet.encoding.force=true
+spring.main.allow‐bean‐definition‐overriding=true
+#mybatis配置
+mybatis.configuration.map‐underscore‐to‐camel‐case=true
+mybatis.mapper-locations=classpath*:mapper/**/*Mapper.xml
+# ============================== 定义数据源 start ============================
+spring.shardingsphere.datasource.names=m1
+#type属性不能为空，否则汇报NullPointerException
+spring.shardingsphere.datasource.m1.type=com.zaxxer.hikari.HikariDataSource
+spring.shardingsphere.datasource.m1.driverClassName=com.mysql.cj.jdbc.Driver
+spring.shardingsphere.datasource.m1.jdbcUrl=jdbc:mysql://192.168.56.112:3306/order_db?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+spring.shardingsphere.datasource.m1.username=root
+spring.shardingsphere.datasource.m1.password=root
+
+#数据库连接池的其它属性......
+# ============================== 定义数据源 end ============================
+# ============================== 数据分片规则 start  ============================
+# 指定t_order表的数据分布情况，配置数据节点，规则由数据源名 + 表名组成
+spring.shardingsphere.rules.sharding.tables.t_order.actual-data-nodes=m1.t_order_$->{1..2}
+# 主键生成策略
+# 指定t_order表的主键生成策略为SNOWFLAKE
+# 如果是自动生成的，在插入数据的sql中就不要传id，null也不行，直接插入字段中就不要有主键的字段
+spring.shardingsphere.rules.sharding.tables.t_order.key-generate-strategy.column=order_id
+spring.shardingsphere.rules.sharding.tables.t_order.key-generate-strategy.key-generator-name=snowflake
+# snowflake与上面key-generator-name定义的名称保持一致
+spring.shardingsphere.rules.sharding.key-generators.snowflake.type=SNOWFLAKE
+# 指定分表策略,
+# standard：用于单分片键的标准分片场景
+# complex：用于多分片键的复合分片场景
+# hint：Hint 分片策略
+# none不分片
+# 指定t_order表分片的字段
+spring.shardingsphere.rules.sharding.tables.t_order.table-strategy.standard.sharding-column=order_id
+# 指定t_order表分片算法名称
+spring.shardingsphere.rules.sharding.tables.t_order.table-strategy.standard.sharding-algorithm-name=t-order-inline
+# t_order表分片算法配置
+# 分片算法类型
+spring.shardingsphere.rules.sharding.sharding-algorithms.t-order-inline.type=INLINE
+# 分片算法属性配置, 配置INLINE表达式
+spring.shardingsphere.rules.sharding.sharding-algorithms.t-order-inline.props.algorithm-expression=t_order_$->{order_id % 2 + 1}
+# ============================== 数据分片规则 end  ============================
+# 打开sql输出日志
+spring.shardingsphere.props.sql-show=true
+
+logging.level.org.apache.shardingsphere.jdbc.core=TRACE
+logging.level.com.zaxxer.hikari=DEBUG
+# 开启 ShardingSphere 全局日志
+logging.level.org.apache.shardingsphere=DEBUG       
+# 显示逻辑 SQL 和实际 SQL
+logging.level.org.apache.shardingsphere.sql=DEBUG
+# 显示 SQL 执行过程
+logging.level.org.apache.shardingsphere.infra.executor.sql.log=DEBUG
+# 显示分片路由细节
+logging.level.org.apache.shardingsphere.sharding=TRACE
+mybatis.configuration.log-impl=org.apache.ibatis.logging.stdout.StdOutImpl 
