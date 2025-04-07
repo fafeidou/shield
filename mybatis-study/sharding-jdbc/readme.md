@@ -9,3 +9,6 @@ Sharding-JDBC系列03：自定义分片算法 https://blog.csdn.net/Weixiaohuai/
 
 
 订单表分库分表的思路 https://www.cnblogs.com/minikobe/p/12907390.html
+
+
+Sharding-JDBC分库分表原理 https://juejin.cn/post/6977288789718728712
