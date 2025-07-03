@@ -1,5 +1,8 @@
-package com.example.proguard.algorithm;
+package com.example.proguard.algorithm.linkedlist;
 
+/**
+ * 反转链表
+ */
 public class ReverseNodeList {
     static class ListNode {
         int val;
