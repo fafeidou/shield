@@ -1,5 +1,23 @@
 package com.example.proguard.algorithm.twoPointers;
 
+/**
+ * ✅ 题目描述
+ * 给定一个链表，判断链表中是否存在环，如果存在环，则返回 环的入口节点；否则返回 null。
+ *
+ * ✅ 解题思路（快慢指针）
+ * 1. 判断是否有环
+ * 使用两个指针 slow 和 fast，初始都指向头节点。
+ * slow 每次走一步，fast 每次走两步。
+ * 如果链表中存在环，两个指针最终会相遇。
+ * 如果 fast 或 fast.next 为 null，说明链表无环。
+ * 2. 找到环的入口节点
+ * 当快慢指针相遇后，将 slow 重置为头节点。
+ * slow 和 fast 每次都走一步，再次相遇的位置就是 环的入口节点。
+ *
+ * ✅ 时间复杂度分析
+ * 时间复杂度：O(n)，每个节点最多被访问两次。
+ * 空间复杂度：O(1)，只使用了常数级别的额外空间
+ */
 public class LinkedListCycleII {
     static class ListNode {
         int val;
